@@ -203,41 +203,92 @@
 
     <script>
         // --- 1. КОНФІГУРАЦІЯ ---
+        // --- ОБНОВЛЕННАЯ КОНФИГУРАЦИЯ (ПОЛНОЕ СООТВЕТСТВИЕ ФАЙЛАМ WORD) ---
         const FORMS_CONFIG = {
-            'VITARAN': [
-                { id: 'tool', label: 'Чим проводили', type: 'text' },
-                { id: 'anesthesia', label: 'Знеболення', type: 'text' },
-                { id: 'technique', label: 'Техніка', type: 'textarea' },
-                { id: 'post_proc', label: 'Постпроцедурний період', type: 'textarea' },
-                { id: 'allergies', label: 'Алергії', type: 'text' },
-                { id: 'cosmetics', label: 'Косметика пацієнта', type: 'text' }
+            'VITARAN': [ // Источник: АНКЕТА...VITARAN.docx
+                { id: 'date_complaint', label: '3. Дата звернення пацієнта', type: 'date' },
+                { id: 'date_proc', label: '4. Дата проведення процедури', type: 'date' },
+                { id: 'tool', label: '5. Чим проводили (голка/канюля, розмір)', type: 'text' },
+                { id: 'anesthesia', label: '6. Знеболення (препарат)', type: 'text' },
+                // Вопрос 7 - фото (в общем блоке)
+                { id: 'technique', label: '8. Техніка виконання процедури', type: 'textarea' },
+                { id: 'complaints_during', label: '9. Скарги під час процедури', type: 'textarea' },
+                { id: 'post_proc', label: '10. Особливості постпроцедурного періоду', type: 'textarea' },
+                { id: 'complaints_now', label: '11. Скарги на даний момент', type: 'textarea' },
+                { id: 'status_localis', label: '12. Status Localis (дані огляду)', type: 'textarea' },
+                { id: 'allergies', label: '13. Алергії на полінуклеотиди?', type: 'select', options: ['Ні', 'Так'] },
+                { id: 'illness', label: '14. Чим хворів за останні 2 міс?', type: 'textarea' },
+                { id: 'cosmetics', label: '15. Яку косметику використовує?', type: 'text' },
+                { id: 'meds', label: '16. Які ліки приймає зараз?', type: 'textarea' }
             ],
-            'NEURONOX': [
-                { id: 'diluent', label: 'Чим відновлювали / об\'єм', type: 'text' },
-                { id: 'date_dilution', label: 'Дата розведення', type: 'date' },
-                { id: 'prev_botox', label: 'Попередня ботулінотерапія', type: 'textarea' },
-                { id: 'illness', label: 'Захворювання', type: 'text' },
-                { id: 'meds', label: 'Ліки зараз', type: 'text' }
+            'NEURONOX': [ // Источник: АНКЕТА...NEURONOX.docx
+                { id: 'date_complaint', label: '3. Дата звернення пацієнта', type: 'date' },
+                { id: 'date_proc', label: '4. Дата проведення процедури', type: 'date' },
+                { id: 'date_dilution', label: '5. Дата відновлення (розведення)', type: 'date' },
+                { id: 'diluent', label: '6. Чим відновлювали та об\'єм', type: 'text' },
+                { id: 'anesthesia', label: '7. Знеболення (препарат)', type: 'text' },
+                // Вопрос 8 - фото (в общем блоке)
+                // Вопрос 9 - схема (в общем блоке)
+                { id: 'patient_age', label: '10. Вік пацієнта', type: 'text' },
+                { id: 'prev_botox_date', label: 'Дата попередньої ботулінотерапії', type: 'date' },
+                { id: 'prev_botox_drug', label: 'Препарат попередньої процедури', type: 'text' },
+                { id: 'prev_effect', label: 'Тривалість ефекту попер. процедури', type: 'text' },
+                { id: 'illness_chronic', label: 'Захворювання (гострі, хронічні)', type: 'textarea' },
+                { id: 'recent_infection', label: 'Як давно хворів простудними?', type: 'text' },
+                { id: 'meds', label: 'Які ліки приймає?', type: 'textarea' }
             ],
-            'NEURAMIS': [
-                { id: 'tool', label: 'Інструмент', type: 'text' },
-                { id: 'prev_contour', label: 'Контурна раніше?', type: 'text' },
-                { id: 'hyaluronidase', label: 'Гіалуронідаза?', type: 'select', options: ['Ні', 'Так'] },
-                { id: 'status_localis', label: 'Status Localis', type: 'textarea' }
+            'NEURAMIS': [ // Источник: АНКЕТА...NEURAMIS (2).docx
+                { id: 'date_complaint', label: '3. Дата звернення пацієнта', type: 'date' },
+                { id: 'date_proc', label: '4. Дата проведення процедури', type: 'date' },
+                { id: 'tool', label: '5. Інструмент (голка/канюля, розмір)', type: 'text' },
+                { id: 'anesthesia', label: '6. Знеболення (препарат)', type: 'text' },
+                // Вопрос 7, 8 - фото/схема (в общем блоке)
+                { id: 'complaints_during', label: '9. Скарги під час процедури', type: 'textarea' },
+                { id: 'post_proc', label: '10. Особливості постпроцедурного періоду', type: 'textarea' },
+                { id: 'complaints_now', label: '11. Скарги на даний момент', type: 'textarea' },
+                { id: 'status_localis', label: '12. Status Localis (дані огляду)', type: 'textarea' },
+                { id: 'prev_contour', label: '13. Контурна пластика тут раніше? (Дата, препарат)', type: 'textarea' },
+                { id: 'prev_complaints', label: '14. Скарги після попер. процедури?', type: 'textarea' },
+                { id: 'hyaluronidase', label: '15. Чи застосовували гіалуронідазу?', type: 'select', options: ['Ні', 'Так'] },
+                { id: 'allergies', label: '16. Схильність до алергій?', type: 'select', options: ['Ні', 'Так'] },
+                { id: 'illness', label: '17. Чим хворів за останні 2 міс?', type: 'textarea' },
+                { id: 'meds', label: '18. Які ліки приймає зараз?', type: 'textarea' }
             ],
-            'ELLANSE': [
-                { id: 'vaccination', label: 'Вакцинація', type: 'text' },
-                { id: 'autoimmune', label: 'Аутоімунні', type: 'text' },
-                { id: 'diet', label: 'Дієта', type: 'text' },
-                { id: 'tool', label: 'Інструмент', type: 'text' }
+            'ELLANSE': [ // Источник: АНКЕТА...ELLANSE.docx
+                { id: 'date_complaint', label: '3. Дата звернення пацієнта', type: 'date' },
+                { id: 'date_proc', label: '4. Дата проведення процедури', type: 'date' },
+                { id: 'tool', label: '5. Чим проводили (розмір)', type: 'text' },
+                // Вопрос 6, 7 - фото/схема (в общем блоке)
+                { id: 'complaints_during', label: '8. Скарги під час процедури', type: 'textarea' },
+                { id: 'post_proc', label: '9. Особливості постпроцедурного періоду', type: 'textarea' },
+                { id: 'complaints_now', label: '10. Скарги на даний момент', type: 'textarea' },
+                { id: 'status_localis', label: '11. Status Localis (дані огляду)', type: 'textarea' },
+                { id: 'vaccination', label: '12. Дата ост. вакцинації, назва', type: 'text' },
+                { id: 'autoimmune', label: '13. Аутоімунні захворювання?', type: 'textarea' },
+                { id: 'diet', label: '14. Особлива дієта?', type: 'text' },
+                { id: 'illness', label: '15. Чим хворів за останні 2 міс?', type: 'textarea' },
+                { id: 'meds', label: '16. Ліки та БАДи зараз?', type: 'textarea' },
+                { id: 'other_procs', label: '17. Інші процедури в цей період?', type: 'textarea' }
             ],
-            'PETARAN': [
-                { id: 'dilution_lido', label: 'Лідокаїн при розведенні?', type: 'select', options: ['Ні', 'Так'] },
-                { id: 'massage', label: 'Масаж?', type: 'select', options: ['Так', 'Ні', 'Не знаю'] },
-                { id: 'allergies_poly', label: 'Алергія на полінукл.?', type: 'text' }
+            'PETARAN': [ // Источник: АНКЕТА...PETARAN.docx
+                { id: 'date_complaint', label: '3. Дата звернення пацієнта', type: 'date' },
+                { id: 'date_proc', label: '4. Дата проведення процедури', type: 'date' },
+                { id: 'tool', label: '5. Інструмент (голка/канюля, розмір)', type: 'text' },
+                { id: 'dilution_lido', label: '6. Лідокаїн при розведенні?', type: 'text' },
+                // Вопрос 7, 8 - фото/схема (в общем блоке)
+                { id: 'complaints_during', label: '9. Скарги під час процедури', type: 'textarea' },
+                { id: 'post_proc', label: '10. Особливості постпроцедурного періоду', type: 'textarea' },
+                { id: 'complaints_now', label: '11. Скарги на даний момент', type: 'textarea' },
+                { id: 'status_localis', label: '12. Status Localis (дані огляду)', type: 'textarea' },
+                { id: 'allergies_poly', label: '13. Алергія на полінуклеотиди?', type: 'select', options: ['Ні', 'Так'] },
+                { id: 'autoimmune', label: '14. Аутоімунні захворювання?', type: 'textarea' },
+                { id: 'massage', label: '15. Чи робив пацієнт масаж (по інструкції)?', type: 'select', options: ['Так', 'Ні', 'Не знаю'] },
+                { id: 'illness', label: '16. Чим хворів за останні 2 міс?', type: 'textarea' },
+                { id: 'meds', label: '17. Які ліки приймає зараз?', type: 'textarea' }
             ],
             'OTHER': [
-                { id: 'problem_desc', label: 'Опис проблеми', type: 'textarea' }
+                { id: 'problem_desc', label: 'Детальний опис проблеми', type: 'textarea' },
+                { id: 'date_proc', label: 'Дата процедури (якщо була)', type: 'date' }
             ]
         };
 
