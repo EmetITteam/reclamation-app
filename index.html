@@ -208,7 +208,7 @@
     </nav>
 
     <script>
-        // --- КОНФІГУРАЦІЯ (Те саме, що й було) ---
+        // --- 1. КОНФІГУРАЦІЯ ---
         const FORMS_CONFIG = {
             'VITARAN': [
                 { id: 'tool', label: 'Чим проводили', type: 'text' },
@@ -259,11 +259,11 @@
             'quality': '💎 Якість',
             'effectiveness': '📉 Ефективність',
             'side_effect': '🤒 Побічна дія',
-            'complication': '🚑 Ускладнення'
+            'complication': '🚑 Ускладнення',
             'other': '📝 Інше'
         };
 
-        // --- ЛОГІКА ДИНАМІЧНОЇ ФОРМИ ---
+        // --- 2. ЛОГІКА ДИНАМІЧНОЇ ФОРМИ ---
         function renderDynamicForm() {
             const product = document.getElementById('product').value;
             const container = document.getElementById('dynamic-form-area');
@@ -280,7 +280,6 @@
             
             FORMS_CONFIG[product].forEach(field => {
                 let html = '';
-                // Зберігаємо label в data-attribute, щоб потім показати в історії
                 if (field.type === 'textarea') {
                     html = `<div><label class="block text-xs font-medium text-gray-600 mb-1">${field.label}</label><textarea data-label="${field.label}" id="custom_${field.id}" rows="2" class="w-full bg-white border border-gray-300 rounded p-2 text-sm outline-none"></textarea></div>`;
                 } else if (field.type === 'select') {
@@ -293,7 +292,7 @@
             });
         }
 
-        // --- АВТОРИЗАЦІЯ ---
+        // --- 3. АВТОРИЗАЦІЯ (Ось тут була помилка - функції не було) ---
         let currentUser = localStorage.getItem('emet_user');
         
         function checkAuth() {
@@ -305,16 +304,25 @@
                 document.getElementById('login-screen').classList.remove('hidden');
             }
         }
+
+        // Ця функція викликається при натисканні кнопки "Увійти"
         function loginUser() {
             const name = document.getElementById('login-name').value.trim();
             if (name) {
                 currentUser = name;
                 localStorage.setItem('emet_user', currentUser);
                 checkAuth();
+            } else {
+                alert('Будь ласка, введіть ім\'я');
             }
         }
 
-        // --- SUBMIT ---
+        function logout() { // Додав про всяк випадок, якщо знадобиться
+            localStorage.removeItem('emet_user');
+            location.reload();
+        }
+
+        // --- 4. SUBMIT ---
         function submitForm(event) {
             event.preventDefault();
             const btnText = document.getElementById('btn-text');
@@ -345,7 +353,7 @@
                 product: product,
                 lot: document.getElementById('lot').value,
                 date_proc: document.getElementById('date_proc').value,
-                details: customData // Зберігаємо об'єкт з деталями
+                details: customData 
             };
 
             setTimeout(() => {
@@ -364,7 +372,7 @@
             }, 1000);
         }
 
-        // --- RENDER HISTORY (NEW: GROUPING) ---
+        // --- 5. RENDER HISTORY ---
         function renderHistory() {
             const activeContainer = document.getElementById('active-list');
             const archiveContainer = document.getElementById('archive-list');
@@ -392,7 +400,6 @@
                 const style = STATUS_LABELS[item.status] || STATUS_LABELS['new'];
                 const typeText = TYPE_LABELS[item.type] || item.type;
                 
-                // HTML картки (тепер з onclick)
                 const cardHtml = `
                 <div onclick="openModal(${item.id})" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 relative overflow-hidden active:scale-[0.98] transition cursor-pointer">
                     <div class="absolute right-3 top-3 text-gray-300"><i class="fa-solid fa-chevron-right"></i></div>
@@ -409,7 +416,6 @@
                     </div>
                 </div>`;
 
-                // Сортування по групах
                 if (['new', 'work'].includes(item.status)) {
                     activeContainer.innerHTML += cardHtml;
                     hasActive = true;
@@ -419,18 +425,16 @@
                 }
             });
 
-            // Показуємо/ховаємо заголовки груп
             groupActive.classList.toggle('hidden', !hasActive);
             groupArchive.classList.toggle('hidden', !hasArchive);
         }
 
-        // --- MODAL LOGIC (NEW) ---
+        // --- 6. MODAL LOGIC ---
         function openModal(id) {
             let history = JSON.parse(localStorage.getItem('emet_history')) || [];
             const claim = history.find(c => c.id === id);
             if (!claim) return;
 
-            // Заповнюємо статику
             document.getElementById('m-id').innerText = `#${claim.id}`;
             document.getElementById('m-type').innerText = TYPE_LABELS[claim.type] || claim.type;
             document.getElementById('m-client').innerText = claim.client;
@@ -439,13 +443,11 @@
             document.getElementById('m-product').innerText = claim.product;
             document.getElementById('m-lot').innerText = claim.lot ? `(LOT: ${claim.lot})` : '';
 
-            // Статус
             const style = STATUS_LABELS[claim.status] || STATUS_LABELS['new'];
             const badge = document.getElementById('m-status-badge');
             badge.className = `px-3 py-1 rounded-full text-xs font-bold uppercase ${style.class}`;
             badge.innerText = style.text;
 
-            // Динамічні поля
             const dynContainer = document.getElementById('m-dynamic-content');
             dynContainer.innerHTML = '';
             
@@ -471,7 +473,7 @@
             document.getElementById('details-modal').classList.add('hidden');
         }
 
-        // --- TAB SWITCH ---
+        // --- 7. UTILS ---
         function switchTab(tabName) {
             document.getElementById('tab-new').classList.toggle('hidden', tabName !== 'new');
             document.getElementById('tab-history').classList.toggle('hidden', tabName !== 'history');
@@ -507,6 +509,7 @@
             }
         }
 
+        // --- START ---
         checkAuth();
     </script>
 </body>
