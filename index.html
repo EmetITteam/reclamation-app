@@ -48,17 +48,17 @@
                 <form id="claimForm" onsubmit="submitForm(event)">
                     
                     <div class="mb-5">
-    <label class="block text-xs font-bold text-gray-500 uppercase mb-2 required-mark">Тип звернення</label>
-    <select id="claimType" onchange="renderDynamicForm()" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none" required>
-        <option value="" disabled selected>Оберіть тип...</option>
-        <option value="defect_pack">📦 Брак упаковки</option>
-        <option value="quality">💎 Якість препарату</option>
-        <option value="effectiveness">📉 Ефективність</option>
-        <option value="side_effect">🤒 Побічна дія</option>
-        <option value="complication">🚑 Ускладнення</option>
-        <option value="other">📝 Інше</option>
-    </select>
-</div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2 required-mark">Тип звернення</label>
+                        <select id="claimType" onchange="renderDynamicForm()" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none" required>
+                            <option value="" disabled selected>Оберіть тип...</option>
+                            <option value="defect_pack">📦 Брак упаковки</option>
+                            <option value="quality">💎 Якість препарату</option>
+                            <option value="effectiveness">📉 Ефективність</option>
+                            <option value="side_effect">🤒 Побічна дія</option>
+                            <option value="complication">🚑 Ускладнення</option>
+                            <option value="other">📝 Інше</option>
+                        </select>
+                    </div>
 
                     <div class="grid grid-cols-1 gap-3 mb-4">
                         <div>
@@ -90,7 +90,7 @@
                     </div>
 
                     <div id="dynamic-form-area" class="hidden mb-5 border-t pt-4">
-                        <h3 class="text-sm font-bold text-gray-700 mb-3"><i class="fa-solid fa-list-check mr-1"></i>Деталі інциденту</h3>
+                        <h3 class="text-sm font-bold text-gray-700 mb-3">Деталі інциденту</h3>
                         <div id="dynamic-fields" class="space-y-3"></div>
                     </div>
 
@@ -167,7 +167,6 @@
                                 <label class="text-xs text-gray-400 uppercase font-bold">№ Реалізації</label>
                                 <p id="m-invoice" class="text-gray-900 font-medium"></p>
                             </div>
-                            
                             <div>
                                 <label class="text-xs text-gray-400 uppercase font-bold">Препарат / ЛОТ</label>
                                 <p class="text-blue-600 font-bold text-lg"><span id="m-product"></span> <span id="m-lot" class="text-gray-500 font-normal text-sm ml-2"></span></p>
@@ -202,8 +201,7 @@
     </nav>
 
     <script>
-        // --- 1. КОНФІГУРАЦІЯ ---
-        // --- ЧИСТА КОНФІГУРАЦІЯ (БЕЗ ЗАЙВОЇ НУМЕРАЦІЇ) ---
+        // --- 1. КОНФІГУРАЦІЯ АНКЕТ (ПОВНА, БЕЗ ЦИФР) ---
         const FORMS_CONFIG = {
             'VITARAN': [ 
                 { id: 'date_complaint', label: 'Дата звернення пацієнта', type: 'date' },
@@ -303,7 +301,6 @@
         };
 
         // --- 2. ЛОГІКА ДИНАМІЧНОЇ ФОРМИ ---
-       // --- 2. ЛОГІКА ДИНАМІЧНОЇ ФОРМИ (ОНОВЛЕНА) ---
         function renderDynamicForm() {
             const product = document.getElementById('product').value;
             const claimType = document.getElementById('claimType').value;
@@ -320,16 +317,12 @@
 
             container.classList.remove('hidden');
 
-            // СПИСОК МЕДИЧНИХ ТИПІВ (Де потрібна повна анкета)
             const medicalTypes = ['side_effect', 'complication', 'effectiveness', 'quality'];
 
-            // ЛОГІКА РОЗГАЛУЖЕННЯ
             if (medicalTypes.includes(claimType)) {
-                // --- ВАРІАНТ А: МЕДИЧНА АНКЕТА ---
+                // --- МЕДИЧНА АНКЕТА ---
                 if (FORMS_CONFIG[product]) {
-                     // Заголовок для медиків
                     container.querySelector('h3').innerHTML = '<i class="fa-solid fa-user-doctor mr-1"></i>Медична анкета';
-                    
                     FORMS_CONFIG[product].forEach(field => {
                         let html = '';
                         if (field.type === 'textarea') {
@@ -344,10 +337,8 @@
                     });
                 }
             } else {
-                // --- ВАРІАНТ Б: БРАК / ІНШЕ (Просте поле) ---
-                // Заголовок для складу
+                // --- БРАК / ІНШЕ ---
                 container.querySelector('h3').innerHTML = '<i class="fa-solid fa-box-open mr-1"></i>Деталі інциденту';
-                
                 const html = `<div>
                     <label class="block text-xs font-medium text-gray-600 mb-1">Опишіть суть проблеми / браку</label>
                     <textarea data-label="Опис проблеми" id="simple_desc" rows="4" class="w-full bg-white border border-gray-300 rounded p-2 text-sm outline-none" placeholder="Що саме сталося?"></textarea>
@@ -356,7 +347,31 @@
             }
         }
 
-        // --- 4. SUBMIT (ОНОВЛЕНИЙ ДЛЯ ЗБОРУ ДАНИХ) ---
+        // --- 3. АВТОРИЗАЦІЯ ---
+        let currentUser = localStorage.getItem('emet_user');
+        
+        function checkAuth() {
+            if (currentUser) {
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('current-user-display').innerText = currentUser;
+                renderHistory();
+            } else {
+                document.getElementById('login-screen').classList.remove('hidden');
+            }
+        }
+
+        function loginUser() {
+            const name = document.getElementById('login-name').value.trim();
+            if (name) {
+                currentUser = name;
+                localStorage.setItem('emet_user', currentUser);
+                checkAuth();
+            } else {
+                alert('Будь ласка, введіть ім\'я');
+            }
+        }
+
+        // --- 4. SUBMIT (ВИПРАВЛЕНО!) ---
         function submitForm(event) {
             event.preventDefault();
             const btnText = document.getElementById('btn-text');
@@ -369,8 +384,8 @@
             const claimType = document.getElementById('claimType').value;
             const medicalTypes = ['side_effect', 'complication', 'effectiveness', 'quality'];
             
-            // Збираємо динамічні поля
-            let customData = {};
+            // --- ТУТ БУЛА ПОМИЛКА, ТЕПЕР ВИПРАВЛЕНО ---
+            let customData = {}; 
 
             if (medicalTypes.includes(claimType)) {
                 // Збираємо по великій анкеті
@@ -416,61 +431,6 @@
                 switchTab('history');
             }, 1000);
         }
-
-        // --- 3. АВТОРИЗАЦІЯ ---
-        let currentUser = localStorage.getItem('emet_user');
-        
-        function checkAuth() {
-            if (currentUser) {
-                document.getElementById('login-screen').classList.add('hidden');
-                document.getElementById('current-user-display').innerText = currentUser;
-                renderHistory();
-            } else {
-                document.getElementById('login-screen').classList.remove('hidden');
-            }
-        }
-
-        function loginUser() {
-            const name = document.getElementById('login-name').value.trim();
-            if (name) {
-                currentUser = name;
-                localStorage.setItem('emet_user', currentUser);
-                checkAuth();
-            } else {
-                alert('Будь ласка, введіть ім\'я');
-            }
-        }
-
-    
-
-            // Основні дані (БЕЗ ДАТИ ПРОЦЕДУРИ)
-            const newClaim = {
-                id: Math.floor(Math.random() * 9000) + 1000,
-                date: new Date().toLocaleDateString(),
-                status: 'new',
-                type: document.getElementById('claimType').value,
-                client: document.getElementById('client').value,
-                invoice: document.getElementById('invoice').value || 'Не вказано', // Значення за замовчуванням
-                product: product,
-                lot: document.getElementById('lot').value,
-                details: customData 
-            };
-
-            setTimeout(() => {
-                let history = JSON.parse(localStorage.getItem('emet_history')) || [];
-                history.unshift(newClaim);
-                localStorage.setItem('emet_history', JSON.stringify(history));
-
-                btnText.innerText = 'Відправити рекламацію';
-                btnLoader.classList.add('hidden');
-                
-                alert('✅ Рекламацію створено!');
-                document.getElementById('claimForm').reset();
-                document.getElementById('dynamic-form-area').classList.add('hidden');
-                document.getElementById('preview-area').innerHTML = '';
-                switchTab('history');
-            }, 1000);
-    
 
         // --- 5. RENDER HISTORY ---
         function renderHistory() {
@@ -539,7 +499,6 @@
             document.getElementById('m-type').innerText = TYPE_LABELS[claim.type] || claim.type;
             document.getElementById('m-client').innerText = claim.client;
             document.getElementById('m-invoice').innerText = claim.invoice || '-';
-            // Дата процедури видалена
             document.getElementById('m-product').innerText = claim.product;
             document.getElementById('m-lot').innerText = claim.lot ? `(LOT: ${claim.lot})` : '';
 
@@ -609,7 +568,6 @@
             }
         }
 
-        // --- START ---
         checkAuth();
     </script>
 </body>
