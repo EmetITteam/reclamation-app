@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="uk">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Service Desk | Рекламации</title>
+    <title>Service Desk | Emet</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -12,222 +12,221 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .loader { border-top-color: #3B82F6; animation: spinner 1.5s linear infinite; }
         @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        /* Анимация модального окна */
-        .modal-enter { opacity: 0; transform: scale(0.95); }
-        .modal-enter-active { opacity: 1; transform: scale(1); transition: all 0.2s ease-out; }
-        .modal-exit { opacity: 0; transform: scale(0.95); transition: all 0.2s ease-in; }
+        /* Стиль для обов'язкових полів */
+        .required-mark::after { content: " *"; color: red; }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans h-screen flex flex-col overflow-hidden">
+<body class="bg-gray-50 text-gray-800 font-sans h-screen flex flex-col">
 
     <div id="login-screen" class="fixed inset-0 bg-white z-50 flex flex-col justify-center items-center p-6">
         <div class="text-center w-full max-w-sm">
             <div class="bg-blue-100 p-4 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
-                <i class="fa-solid fa-user-shield text-3xl text-blue-600"></i>
+                <i class="fa-solid fa-user-doctor text-3xl text-blue-600"></i>
             </div>
-            <h2 class="text-2xl font-bold mb-2">Авторизация</h2>
-            <p class="text-gray-500 mb-6">Введите ваше имя, как в Битриксе, чтобы видеть свои заявки.</p>
-            <input type="text" id="login-name" class="w-full border border-gray-300 rounded-lg p-3 mb-4 text-center text-lg" placeholder="Например: Евгения">
-            <button onclick="loginUser()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow hover:bg-blue-700">Войти в систему</button>
+            <h2 class="text-2xl font-bold mb-2">Вхід у систему</h2>
+            <p class="text-gray-500 mb-6">Введіть ваше ім'я для ідентифікації</p>
+            <input type="text" id="login-name" class="w-full border border-gray-300 rounded-lg p-3 mb-4 text-center text-lg" placeholder="Наприклад: Олена">
+            <button onclick="loginUser()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow hover:bg-blue-700">Увійти</button>
         </div>
     </div>
 
     <header class="bg-white shadow-sm p-4 flex justify-between items-center z-10 shrink-0">
-        <h1 class="text-xl font-bold text-blue-600"><i class="fa-solid fa-stethoscope mr-2"></i>Service Desk</h1>
-        <div class="flex items-center gap-2">
-            <div class="text-xs text-right">
-                <div class="text-gray-400">Менеджер</div>
-                <div class="font-bold text-gray-800" id="current-user-display">...</div>
-            </div>
-            <button onclick="logout()" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-right-from-bracket"></i></button>
+        <h1 class="text-lg font-bold text-blue-800 flex items-center gap-2">
+            <i class="fa-solid fa-notes-medical"></i> EMET Service Desk
+        </h1>
+        <div class="text-xs text-right leading-tight">
+            <div class="text-gray-400">Користувач</div>
+            <div class="font-bold text-gray-800" id="current-user-display">...</div>
         </div>
     </header>
 
-    <main class="flex-1 overflow-y-auto p-4 no-scrollbar relative pb-24">
-        
+    <main class="flex-1 overflow-y-auto p-3 pb-24 no-scrollbar">
+
         <div id="tab-new" class="block">
-            <div class="bg-white rounded-xl shadow p-5">
-                <h2 class="text-lg font-semibold mb-4">Оформить рекламацию</h2>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                <h2 class="text-lg font-semibold mb-4 text-gray-800 border-b pb-2">Нова рекламація</h2>
+                
                 <form id="claimForm" onsubmit="submitForm(event)">
-                    <div class="mb-4">
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Тип проблемы</label>
-                        <div class="grid grid-cols-2 gap-2">
-                            <input type="radio" name="type" id="type_logistics" value="logistics" class="peer hidden" checked>
-                            <label for="type_logistics" class="cursor-pointer border border-gray-200 rounded-lg p-3 text-center peer-checked:border-blue-500 peer-checked:bg-blue-50 text-gray-600 peer-checked:text-blue-700 transition">
-                                <i class="fa-solid fa-box-open block mb-1 text-xl"></i>
-                                <span class="text-xs font-bold">Брак / Упаковка</span>
-                            </label>
-
-                            <input type="radio" name="type" id="type_medical" value="medical" class="peer hidden">
-                            <label for="type_medical" class="cursor-pointer border border-gray-200 rounded-lg p-3 text-center peer-checked:border-red-500 peer-checked:bg-red-50 text-gray-600 peer-checked:text-red-700 transition">
-                                <i class="fa-solid fa-user-doctor block mb-1 text-xl"></i>
-                                <span class="text-xs font-bold">Осложнение</span>
-                            </label>
-                        </div>
+                    
+                    <div class="mb-5">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2 required-mark">Тип звернення</label>
+                        <select id="claimType" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none" required>
+                            <option value="" disabled selected>Оберіть тип...</option>
+                            <option value="defect_pack">📦 Брак упаковки</option>
+                            <option value="quality">💎 Якість препарату</option>
+                            <option value="effectiveness">📉 Ефективність (не спрацював)</option>
+                            <option value="side_effect">🤒 Побічна дія</option>
+                            <option value="complication">🚑 Ускладнення</option>
+                        </select>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Клиент</label>
-                        <input type="text" id="client" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-3" placeholder="Фамилия врача или Салон" required>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3 mb-3">
+                    <div class="grid grid-cols-1 gap-3 mb-4">
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Препарат</label>
-                            <select id="product" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-3">
-                                <option>HP CELL VITARAN i</option>
-                                <option>HP CELL VITARAN i II</option>
-                                <option>HP CELL VITARAN Tox</option>
-                                <option>EXOXE set</option>
-                            </select>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1 required-mark">Клієнт (Лікар/Салон)</label>
+                            <input type="text" id="client" class="w-full border border-gray-300 rounded-lg p-3 text-sm" placeholder="ПІБ лікаря" required>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Серия</label>
-                            <input type="text" id="series" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-3" placeholder="Код">
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1 required-mark">№ Реалізації</label>
+                            <input type="text" id="invoice" class="w-full border border-gray-300 rounded-lg p-3 text-sm" placeholder="Напр: РН-00123" required>
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Описание</label>
-                        <textarea id="description" rows="3" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-3" placeholder="Детали ситуации..."></textarea>
+                    <div class="mb-5 bg-blue-50 p-3 rounded-lg border border-blue-100">
+                        <label class="block text-xs font-bold text-blue-800 uppercase mb-2 required-mark">Препарат</label>
+                        <select id="product" onchange="renderDynamicForm()" class="w-full bg-white border border-blue-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none" required>
+                            <option value="" disabled selected>Оберіть препарат...</option>
+                            <option value="VITARAN">HP CELL VITARAN (всі)</option>
+                            <option value="NEURONOX">NEURONOX</option>
+                            <option value="NEURAMIS">NEURAMIS</option>
+                            <option value="ELLANSE">ELLANSE</option>
+                            <option value="PETARAN">PETARAN</option>
+                            <option value="OTHER">Інше / Космецевтика</option>
+                        </select>
+                        
+                        <div class="mt-3 grid grid-cols-2 gap-2">
+                            <input type="text" id="lot" class="w-full border border-gray-300 rounded-lg p-2 text-sm" placeholder="LOT / Серія" required>
+                            <input type="date" id="date_proc" class="w-full border border-gray-300 rounded-lg p-2 text-sm text-gray-500" title="Дата процедури">
+                        </div>
+                    </div>
+
+                    <div id="dynamic-form-area" class="hidden mb-5 border-t pt-4">
+                        <h3 class="text-sm font-bold text-gray-700 mb-3"><i class="fa-solid fa-list-check mr-1"></i>Деталі інциденту</h3>
+                        <div id="dynamic-fields" class="space-y-3">
+                            </div>
                     </div>
 
                     <div class="mb-6">
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Фото</label>
-                        <label class="flex flex-col items-center justify-center w-full h-24 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Фото/Відео/Схема</label>
+                        <p class="text-xs text-gray-400 mb-2">Завантажте фото "До/Після" або фото схеми розмітки</p>
+                        <label class="flex flex-col items-center justify-center w-full h-24 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition">
                             <i class="fa-solid fa-camera text-gray-400 text-xl"></i>
-                            <span class="text-xs text-gray-500 mt-1">Добавить файлы</span>
-                            <input id="dropzone-file" type="file" class="hidden" multiple accept="image/*" onchange="previewFiles()" />
+                            <span class="text-xs text-gray-500 mt-1">Натисніть для вибору файлів</span>
+                            <input id="dropzone-file" type="file" class="hidden" multiple accept="image/*,video/*" onchange="previewFiles()" />
                         </label>
-                        <div id="preview-area" class="flex gap-2 mt-2 overflow-x-auto"></div>
+                        <div id="preview-area" class="flex gap-2 mt-2 overflow-x-auto p-1"></div>
                     </div>
 
-                    <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow hover:bg-blue-700 flex justify-center items-center">
-                        <span id="btn-text">Отправить</span>
-                        <div id="btn-loader" class="loader ease-linear rounded-full border-2 border-t-2 border-gray-200 h-5 w-5 ml-2 hidden"></div>
+                    <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold py-3.5 rounded-xl shadow-lg hover:shadow-xl transition active:scale-95 flex justify-center items-center">
+                        <span id="btn-text">Відправити рекламацію</span>
+                        <div id="btn-loader" class="loader ease-linear rounded-full border-2 border-t-2 border-white h-5 w-5 ml-2 hidden"></div>
                     </button>
                 </form>
             </div>
         </div>
 
         <div id="tab-history" class="hidden">
-            <h2 class="text-lg font-semibold mb-4 px-1">Мои заявки</h2>
-            <div id="history-container">
-                </div>
-            <div id="empty-state" class="hidden text-center mt-10 text-gray-400">
-                <i class="fa-regular fa-folder-open text-4xl mb-2"></i>
-                <p>У вас пока нет заявок</p>
+            <h2 class="text-lg font-semibold mb-4 px-1">Мої заявки</h2>
+            <div id="history-container" class="space-y-3"></div>
+            <div id="empty-state" class="hidden text-center mt-12 text-gray-400">
+                <i class="fa-regular fa-folder-open text-4xl mb-3"></i>
+                <p>Історія порожня</p>
             </div>
         </div>
     </main>
 
-    <div id="details-modal" class="fixed inset-0 z-40 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeModal()"></div>
-
-        <div class="fixed inset-0 z-10 overflow-y-auto">
-            <div class="flex min-h-full items-end justify-center p-0 text-center sm:items-center sm:p-0">
-                <div class="relative transform overflow-hidden bg-white text-left shadow-xl transition-all w-full h-full sm:h-auto sm:my-8 sm:w-full sm:max-w-lg sm:rounded-lg flex flex-col">
-                    
-                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4 border-b flex justify-between items-center shrink-0">
-                        <h3 class="text-lg font-semibold leading-6 text-gray-900" id="modal-title">Заявка #<span id="m-id"></span></h3>
-                        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
-                    </div>
-
-                    <div class="px-4 py-4 overflow-y-auto flex-1 bg-gray-50">
-                        <div class="bg-white p-4 rounded-lg shadow-sm mb-4">
-                            <div class="flex justify-between mb-2">
-                                <span id="m-status" class="px-2 py-1 rounded text-xs font-bold uppercase">Статус</span>
-                                <span id="m-date" class="text-gray-500 text-xs">Дата</span>
-                            </div>
-                            <h4 id="m-client" class="text-xl font-bold text-gray-800 mb-1">Клиент</h4>
-                            <p id="m-product" class="text-blue-600 font-medium text-sm mb-4"></p>
-                            
-                            <div class="border-t pt-3">
-                                <p class="text-xs text-gray-500 uppercase font-bold mb-1">Суть проблемы</p>
-                                <p id="m-desc" class="text-gray-700 text-sm leading-relaxed"></p>
-                            </div>
-                        </div>
-
-                        <div id="m-response-block" class="bg-green-50 border border-green-200 p-4 rounded-lg shadow-sm hidden">
-                            <div class="flex items-center gap-2 mb-2">
-                                <i class="fa-solid fa-user-doctor text-green-600"></i>
-                                <span class="text-xs font-bold text-green-700 uppercase">Решение врача</span>
-                            </div>
-                            <p id="m-response" class="text-gray-800 text-sm"></p>
-                        </div>
-                    </div>
-
-                    <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 shrink-0 border-t">
-                        <button type="button" class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto" onclick="closeModal()">Закрыть</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <nav class="bg-white border-t border-gray-200 fixed bottom-0 w-full z-10 shrink-0">
-        <div class="flex justify-around">
-            <button onclick="switchTab('new')" id="nav-new" class="flex-1 py-3 text-blue-600 flex flex-col items-center">
-                <i class="fa-solid fa-plus-circle text-xl mb-1"></i>
-                <span class="text-xs font-medium">Подать</span>
+    <nav class="bg-white border-t border-gray-200 fixed bottom-0 w-full z-20 pb-safe">
+        <div class="flex justify-around items-center h-16">
+            <button onclick="switchTab('new')" id="nav-new" class="flex-1 h-full text-blue-600 flex flex-col items-center justify-center">
+                <i class="fa-solid fa-circle-plus text-xl mb-1"></i>
+                <span class="text-[10px] font-bold uppercase">Подати</span>
             </button>
-            <button onclick="switchTab('history')" id="nav-history" class="flex-1 py-3 text-gray-400 flex flex-col items-center">
-                <i class="fa-solid fa-list text-xl mb-1"></i>
-                <span class="text-xs font-medium">История</span>
+            <button onclick="switchTab('history')" id="nav-history" class="flex-1 h-full text-gray-400 flex flex-col items-center justify-center">
+                <i class="fa-solid fa-clock-rotate-left text-xl mb-1"></i>
+                <span class="text-[10px] font-bold uppercase">Історія</span>
             </button>
         </div>
     </nav>
 
     <script>
-        // --- 1. MOCK DATA (Имитация базы данных) ---
-        // В будущем эти данные будут прилетать из Битрикса
-        const MOCK_DB = [
-            {
-                id: 1024,
-                manager: "Евгения",
-                client: "Каратеева Елена",
-                product: "HP CELL VITARAN",
-                type: "medical",
-                status: "work", // new, work, done, reject
-                statusText: "В работе у врача",
-                date: "12.12.2024",
-                desc: "Папулы стойкие, розовые на 11 день после процедуры. Клиент жалуется на зуд.",
-                response: null
-            },
-            {
-                id: 1020,
-                manager: "Евгения",
-                client: "Салон Эстетика",
-                product: "HP CELL VITARAN i",
-                type: "logistics",
-                status: "done",
-                statusText: "Замена одобрена",
-                date: "10.12.2024",
-                desc: "При вскрытии обнаружили трещину на шприце, препарат вытек в блистер.",
-                response: "Согласована замена. Отправка завтра НП, ТТН 204000..."
-            },
-            {
-                id: 998,
-                manager: "Иван", /* Другой менеджер */
-                client: "Клиника 'Здоровье'",
-                product: "EXOXE set",
-                type: "logistics",
-                status: "new",
-                statusText: "Новая заявка",
-                date: "05.12.2024",
-                desc: "Мятая упаковка",
-                response: null
+        // --- КОНФІГУРАЦІЯ ПОЛІВ ДЛЯ РІЗНИХ ПРЕПАРАТІВ (Згідно DOCX) ---
+        const FORMS_CONFIG = {
+            'VITARAN': [
+                { id: 'tool', label: 'Чим проводили (голка/канюля, розмір)', type: 'text' },
+                { id: 'anesthesia', label: 'Знеболення (препарат)', type: 'text' },
+                { id: 'technique', label: 'Техніка виконання', type: 'textarea' },
+                { id: 'post_proc', label: 'Особливості постпроцедурного періоду', type: 'textarea' },
+                { id: 'allergies', label: 'Алергії в анамнезі', type: 'text' },
+                { id: 'cosmetics', label: 'Яку косметику використовує пацієнт?', type: 'text' }
+            ],
+            'NEURONOX': [
+                { id: 'diluent', label: 'Чим відновлювали (Натрій хлор 0.9%?) та об\'єм', type: 'text' },
+                { id: 'date_dilution', label: 'Дата розведення', type: 'date' },
+                { id: 'prev_botox', label: 'Попередня ботулінотерапія (дата, препарат)', type: 'textarea' },
+                { id: 'illness', label: 'Захворювання (гострі, хронічні)', type: 'text' },
+                { id: 'meds', label: 'Які ліки приймає зараз?', type: 'text' }
+            ],
+            'NEURAMIS': [
+                { id: 'tool', label: 'Інструмент (голка/канюля)', type: 'text' },
+                { id: 'prev_contour', label: 'Контурна пластика в цій зоні раніше?', type: 'text' },
+                { id: 'hyaluronidase', label: 'Чи застосовували раніше гіалуронідазу?', type: 'select', options: ['Ні', 'Так'] },
+                { id: 'status_localis', label: 'Status Localis (дані огляду)', type: 'textarea' }
+            ],
+            'ELLANSE': [
+                { id: 'vaccination', label: 'Дата останньої вакцинації', type: 'text' },
+                { id: 'autoimmune', label: 'Аутоімунні захворювання', type: 'text' },
+                { id: 'diet', label: 'Особлива дієта?', type: 'text' },
+                { id: 'tool', label: 'Інструмент (розмір)', type: 'text' }
+            ],
+            'PETARAN': [
+                { id: 'dilution_lido', label: 'Чи додавали лідокаїн при розведенні?', type: 'select', options: ['Ні', 'Так'] },
+                { id: 'massage', label: 'Чи робив пацієнт масаж (дотримання інструкції)?', type: 'select', options: ['Так', 'Ні', 'Не знаю'] },
+                { id: 'allergies_poly', label: 'Алергія на полінуклеотиди?', type: 'text' }
+            ],
+            'OTHER': [
+                { id: 'problem_desc', label: 'Детальний опис проблеми', type: 'textarea' }
+            ]
+        };
+
+        // --- ЛОГИКА ---
+        
+        function renderDynamicForm() {
+            const product = document.getElementById('product').value;
+            const container = document.getElementById('dynamic-form-area');
+            const fieldsContainer = document.getElementById('dynamic-fields');
+            
+            // Очистка
+            fieldsContainer.innerHTML = '';
+            
+            if (!product || !FORMS_CONFIG[product]) {
+                container.classList.add('hidden');
+                return;
             }
-        ];
 
-        let currentUser = localStorage.getItem('desk_user');
+            container.classList.remove('hidden');
+            
+            // Генерація полів
+            FORMS_CONFIG[product].forEach(field => {
+                let html = '';
+                if (field.type === 'textarea') {
+                    html = `<div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">${field.label}</label>
+                        <textarea name="custom_${field.id}" rows="2" class="w-full bg-white border border-gray-300 rounded p-2 text-sm focus:border-blue-500 outline-none"></textarea>
+                    </div>`;
+                } else if (field.type === 'select') {
+                    const opts = field.options.map(o => `<option>${o}</option>`).join('');
+                    html = `<div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">${field.label}</label>
+                        <select name="custom_${field.id}" class="w-full bg-white border border-gray-300 rounded p-2 text-sm focus:border-blue-500 outline-none">${opts}</select>
+                    </div>`;
+                } else {
+                    html = `<div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">${field.label}</label>
+                        <input type="${field.type}" name="custom_${field.id}" class="w-full bg-white border border-gray-300 rounded p-2 text-sm focus:border-blue-500 outline-none">
+                    </div>`;
+                }
+                fieldsContainer.insertAdjacentHTML('beforeend', html);
+            });
+        }
 
-        // --- 2. ЛОГИКА АВТОРИЗАЦИИ ---
+        // --- АВТОРИЗАЦІЯ І ЗАВАНТАЖЕННЯ (Як в минулій версії) ---
+        let currentUser = localStorage.getItem('emet_user');
+        const MOCK_DB = []; // Порожній старт
+
         function checkAuth() {
             if (currentUser) {
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('current-user-display').innerText = currentUser;
-                renderHistory(); // Загружаем историю сразу
+                renderHistory();
             } else {
                 document.getElementById('login-screen').classList.remove('hidden');
             }
@@ -237,117 +236,113 @@
             const name = document.getElementById('login-name').value.trim();
             if (name) {
                 currentUser = name;
-                localStorage.setItem('desk_user', currentUser);
+                localStorage.setItem('emet_user', currentUser);
                 checkAuth();
             }
         }
 
-        function logout() {
-            localStorage.removeItem('desk_user');
-            location.reload();
+        // --- ОБРОБКА ФОРМИ ---
+        function submitForm(event) {
+            event.preventDefault();
+            const btnText = document.getElementById('btn-text');
+            const btnLoader = document.getElementById('btn-loader');
+            
+            btnText.innerText = 'Відправка...';
+            btnLoader.classList.remove('hidden');
+
+            // Збираємо дані
+            const formData = {
+                type: document.getElementById('claimType').value,
+                client: document.getElementById('client').value,
+                invoice: document.getElementById('invoice').value,
+                product: document.getElementById('product').value,
+                lot: document.getElementById('lot').value,
+                // Тут ми б зібрали всі динамічні поля
+            };
+
+            // Імітація відправки в Бітрикс
+            setTimeout(() => {
+                const newClaim = {
+                    id: Math.floor(Math.random() * 9000) + 1000,
+                    date: new Date().toLocaleDateString(),
+                    status: 'new',
+                    statusText: 'Нова заявка',
+                    ...formData
+                };
+                
+                // Зберігаємо в локальну "базу" для демо
+                let history = JSON.parse(localStorage.getItem('emet_history')) || [];
+                history.unshift(newClaim);
+                localStorage.setItem('emet_history', JSON.stringify(history));
+
+                btnText.innerText = 'Відправити рекламацію';
+                btnLoader.classList.add('hidden');
+                
+                alert('✅ Рекламацію успішно створено! \nДані передано в медичний відділ.');
+                document.getElementById('claimForm').reset();
+                document.getElementById('preview-area').innerHTML = '';
+                document.getElementById('dynamic-form-area').classList.add('hidden');
+                
+                switchTab('history');
+            }, 1500);
         }
 
-        // --- 3. РЕНДЕРИНГ ИСТОРИИ ---
         function renderHistory() {
             const container = document.getElementById('history-container');
             const emptyState = document.getElementById('empty-state');
             container.innerHTML = '';
-
-            // Фильтруем: показываем только заявки текущего менеджера
-            const myClaims = MOCK_DB.filter(item => item.manager.toLowerCase() === currentUser.toLowerCase());
-
-            if (myClaims.length === 0) {
+            
+            let history = JSON.parse(localStorage.getItem('emet_history')) || [];
+            
+            if (history.length === 0) {
                 emptyState.classList.remove('hidden');
                 return;
-            } else {
-                emptyState.classList.add('hidden');
             }
+            emptyState.classList.add('hidden');
 
-            myClaims.forEach(claim => {
-                // Определение цветов для статуса
-                let statusColor = "bg-gray-100 text-gray-600";
-                if(claim.status === 'work') statusColor = "bg-yellow-100 text-yellow-700";
-                if(claim.status === 'done') statusColor = "bg-green-100 text-green-700";
-                if(claim.status === 'reject') statusColor = "bg-red-100 text-red-700";
+            history.forEach(item => {
+                const typeLabels = {
+                    'defect_pack': 'Брак упаковки',
+                    'quality': 'Якість',
+                    'effectiveness': 'Ефективність',
+                    'side_effect': 'Побічна дія',
+                    'complication': 'Ускладнення'
+                };
 
                 const card = `
-                <div class="bg-white rounded-xl shadow p-4 mb-3 border-l-4 ${claim.type === 'medical' ? 'border-red-400' : 'border-blue-400'}">
-                    <div class="flex justify-between items-start mb-2">
-                        <span class="bg-gray-100 text-gray-500 text-xs font-bold px-2 py-1 rounded">#${claim.id}</span>
-                        <span class="text-xs text-gray-400">${claim.date}</span>
+                <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-3 relative overflow-hidden">
+                    <div class="absolute left-0 top-0 bottom-0 w-1 ${item.status === 'new' ? 'bg-blue-500' : 'bg-green-500'}"></div>
+                    <div class="flex justify-between items-start mb-1 pl-2">
+                        <span class="text-[10px] font-bold text-gray-400">#${item.id} • ${item.date}</span>
+                        <span class="bg-blue-50 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-blue-100 uppercase tracking-wide">${item.statusText}</span>
                     </div>
-                    <h3 class="font-bold text-gray-800">${claim.client}</h3>
-                    <p class="text-sm text-gray-600 mb-2 truncate">${claim.product}</p>
-                    <div class="mt-2 pt-2 border-t border-gray-100 flex justify-between items-center">
-                        <span class="${statusColor} px-2 py-1 rounded text-xs font-bold flex items-center">
-                            ${claim.status === 'work' ? '<i class="fa-solid fa-spinner fa-spin mr-1"></i>' : ''}
-                            ${claim.statusText}
-                        </span>
-                        <button onclick="openModal(${claim.id})" class="text-blue-500 text-xs font-bold border border-blue-100 px-3 py-1 rounded hover:bg-blue-50">Подробнее</button>
+                    <div class="pl-2">
+                        <h3 class="font-bold text-gray-800 text-sm">${item.client}</h3>
+                        <p class="text-xs text-gray-500 mb-1">РН: ${item.invoice}</p>
+                        <div class="flex items-center gap-2 mt-2">
+                            <span class="text-xs font-semibold bg-gray-100 px-2 py-1 rounded text-gray-600">${typeLabels[item.type] || item.type}</span>
+                            <span class="text-xs text-gray-500 border border-gray-200 px-2 py-1 rounded">${item.product}</span>
+                        </div>
                     </div>
                 </div>`;
                 container.innerHTML += card;
             });
         }
 
-        // --- 4. МОДАЛЬНОЕ ОКНО ---
-        function openModal(id) {
-            const claim = MOCK_DB.find(c => c.id === id);
-            if (!claim) return;
-
-            document.getElementById('m-id').innerText = claim.id;
-            document.getElementById('m-date').innerText = claim.date;
-            document.getElementById('m-client').innerText = claim.client;
-            document.getElementById('m-product').innerText = claim.product + (claim.series ? ` (Сер: ${claim.series})` : '');
-            document.getElementById('m-desc').innerText = claim.desc;
-            
-            // Статус в модалке
-            const statusEl = document.getElementById('m-status');
-            statusEl.innerText = claim.statusText;
-            // Сброс классов цвета
-            statusEl.className = "px-2 py-1 rounded text-xs font-bold uppercase";
-            if(claim.status === 'work') statusEl.classList.add('bg-yellow-100', 'text-yellow-700');
-            else if(claim.status === 'done') statusEl.classList.add('bg-green-100', 'text-green-700');
-            else statusEl.classList.add('bg-gray-100', 'text-gray-600');
-
-            // Ответ врача
-            const responseBlock = document.getElementById('m-response-block');
-            if (claim.response) {
-                document.getElementById('m-response').innerText = claim.response;
-                responseBlock.classList.remove('hidden');
-            } else {
-                responseBlock.classList.add('hidden');
-            }
-
-            document.getElementById('details-modal').classList.remove('hidden');
-        }
-
-        function closeModal() {
-            document.getElementById('details-modal').classList.add('hidden');
-        }
-
-        // --- 5. ОБЩИЕ ФУНКЦИИ ---
         function switchTab(tabName) {
-            const tabNew = document.getElementById('tab-new');
-            const tabHistory = document.getElementById('tab-history');
+            document.getElementById('tab-new').classList.toggle('hidden', tabName !== 'new');
+            document.getElementById('tab-history').classList.toggle('hidden', tabName !== 'history');
+            
             const navNew = document.getElementById('nav-new');
-            const navHistory = document.getElementById('nav-history');
-
-            if (tabName === 'new') {
-                tabNew.classList.remove('hidden');
-                tabHistory.classList.add('hidden');
-                navNew.classList.add('text-blue-600', 'text-gray-400'); // fix logic
-                navNew.classList.remove('text-gray-400');
-                navHistory.classList.add('text-gray-400');
-                navHistory.classList.remove('text-blue-600');
+            const navHist = document.getElementById('nav-history');
+            
+            if(tabName === 'new') {
+                navNew.classList.add('text-blue-600'); navNew.classList.remove('text-gray-400');
+                navHist.classList.add('text-gray-400'); navHist.classList.remove('text-blue-600');
             } else {
-                tabNew.classList.add('hidden');
-                tabHistory.classList.remove('hidden');
-                navHistory.classList.add('text-blue-600');
-                navHistory.classList.remove('text-gray-400');
-                navNew.classList.add('text-gray-400');
-                navNew.classList.remove('text-blue-600');
-                renderHistory(); // Перерисовать при открытии
+                navHist.classList.add('text-blue-600'); navHist.classList.remove('text-gray-400');
+                navNew.classList.add('text-gray-400'); navNew.classList.remove('text-blue-600');
+                renderHistory();
             }
         }
 
@@ -360,7 +355,7 @@
                     const reader = new FileReader();
                     reader.onload = function(e) {
                         const div = document.createElement('div');
-                        div.className = 'flex-shrink-0 w-16 h-16 rounded overflow-hidden border border-gray-200 relative';
+                        div.className = 'flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border border-gray-200';
                         div.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">`;
                         preview.appendChild(div);
                     }
@@ -369,46 +364,7 @@
             }
         }
 
-        function submitForm(event) {
-            event.preventDefault();
-            const btnText = document.getElementById('btn-text');
-            const btnLoader = document.getElementById('btn-loader');
-            
-            btnText.innerText = 'Отправка...';
-            btnLoader.classList.remove('hidden');
-            
-            // Имитация добавления в базу
-            setTimeout(() => {
-                const newClaim = {
-                    id: Math.floor(Math.random() * 1000) + 1000,
-                    manager: currentUser,
-                    client: document.getElementById('client').value,
-                    product: document.getElementById('product').value,
-                    type: document.querySelector('input[name="type"]:checked').value,
-                    status: "new",
-                    statusText: "Новая заявка",
-                    date: new Date().toLocaleDateString(),
-                    desc: document.getElementById('description').value,
-                    response: null
-                };
-                
-                // Добавляем в начало массива
-                MOCK_DB.unshift(newClaim);
-                
-                btnText.innerText = 'Отправить';
-                btnLoader.classList.add('hidden');
-                alert('Заявка создана! Перейдите в историю.');
-                
-                document.getElementById('claimForm').reset();
-                document.getElementById('preview-area').innerHTML = '';
-                switchTab('history');
-                
-            }, 1000);
-        }
-
-        // Запуск проверки при загрузке
         checkAuth();
-
     </script>
 </body>
 </html>
