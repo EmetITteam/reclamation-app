@@ -66,8 +66,8 @@
                             <input type="text" id="client" class="w-full border border-gray-300 rounded-lg p-3 text-sm" placeholder="ПІБ лікаря" required>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1 required-mark">№ Реалізації</label>
-                            <input type="text" id="invoice" class="w-full border border-gray-300 rounded-lg p-3 text-sm" placeholder="Напр: РН-00123" required>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">№ Реалізації</label>
+                            <input type="text" id="invoice" class="w-full border border-gray-300 rounded-lg p-3 text-sm" placeholder="Не обов'язково">
                         </div>
                     </div>
 
@@ -83,9 +83,9 @@
                             <option value="OTHER">Інше / Космецевтика</option>
                         </select>
                         
-                        <div class="mt-3 grid grid-cols-2 gap-2">
-                            <input type="text" id="lot" class="w-full border border-gray-300 rounded-lg p-2 text-sm" placeholder="LOT / Серія" required>
-                            <input type="date" id="date_proc" class="w-full border border-gray-300 rounded-lg p-2 text-sm text-gray-500" title="Дата процедури">
+                        <div class="mt-3">
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1 required-mark">LOT / Серія</label>
+                            <input type="text" id="lot" class="w-full border border-gray-300 rounded-lg p-3 text-sm" placeholder="Вкажіть LOT із упаковки" required>
                         </div>
                     </div>
 
@@ -163,16 +163,11 @@
                                 <label class="text-xs text-gray-400 uppercase font-bold">Клієнт</label>
                                 <p id="m-client" class="text-gray-900 font-medium"></p>
                             </div>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="text-xs text-gray-400 uppercase font-bold">№ Реалізації</label>
-                                    <p id="m-invoice" class="text-gray-900 font-medium"></p>
-                                </div>
-                                <div>
-                                    <label class="text-xs text-gray-400 uppercase font-bold">Дата процедури</label>
-                                    <p id="m-date-proc" class="text-gray-900 font-medium"></p>
-                                </div>
+                            <div>
+                                <label class="text-xs text-gray-400 uppercase font-bold">№ Реалізації</label>
+                                <p id="m-invoice" class="text-gray-900 font-medium"></p>
                             </div>
+                            
                             <div>
                                 <label class="text-xs text-gray-400 uppercase font-bold">Препарат / ЛОТ</label>
                                 <p class="text-blue-600 font-bold text-lg"><span id="m-product"></span> <span id="m-lot" class="text-gray-500 font-normal text-sm ml-2"></span></p>
@@ -181,8 +176,7 @@
 
                         <div id="m-dynamic-details" class="mt-6 border-t pt-4">
                             <h4 class="text-sm font-bold text-gray-800 mb-3"><i class="fa-solid fa-clipboard-list mr-2 text-blue-500"></i>Деталі анкети</h4>
-                            <div id="m-dynamic-content" class="text-sm space-y-2 bg-blue-50 p-3 rounded-lg">
-                                </div>
+                            <div id="m-dynamic-content" class="text-sm space-y-2 bg-blue-50 p-3 rounded-lg"></div>
                         </div>
                     </div>
 
@@ -292,7 +286,7 @@
             });
         }
 
-        // --- 3. АВТОРИЗАЦІЯ (Ось тут була помилка - функції не було) ---
+        // --- 3. АВТОРИЗАЦІЯ ---
         let currentUser = localStorage.getItem('emet_user');
         
         function checkAuth() {
@@ -305,7 +299,6 @@
             }
         }
 
-        // Ця функція викликається при натисканні кнопки "Увійти"
         function loginUser() {
             const name = document.getElementById('login-name').value.trim();
             if (name) {
@@ -315,11 +308,6 @@
             } else {
                 alert('Будь ласка, введіть ім\'я');
             }
-        }
-
-        function logout() { // Додав про всяк випадок, якщо знадобиться
-            localStorage.removeItem('emet_user');
-            location.reload();
         }
 
         // --- 4. SUBMIT ---
@@ -342,17 +330,16 @@
                 });
             }
 
-            // Основні дані
+            // Основні дані (БЕЗ ДАТИ ПРОЦЕДУРИ)
             const newClaim = {
                 id: Math.floor(Math.random() * 9000) + 1000,
                 date: new Date().toLocaleDateString(),
                 status: 'new',
                 type: document.getElementById('claimType').value,
                 client: document.getElementById('client').value,
-                invoice: document.getElementById('invoice').value,
+                invoice: document.getElementById('invoice').value || 'Не вказано', // Значення за замовчуванням
                 product: product,
                 lot: document.getElementById('lot').value,
-                date_proc: document.getElementById('date_proc').value,
                 details: customData 
             };
 
@@ -438,8 +425,8 @@
             document.getElementById('m-id').innerText = `#${claim.id}`;
             document.getElementById('m-type').innerText = TYPE_LABELS[claim.type] || claim.type;
             document.getElementById('m-client').innerText = claim.client;
-            document.getElementById('m-invoice').innerText = claim.invoice;
-            document.getElementById('m-date-proc').innerText = claim.date_proc || '-';
+            document.getElementById('m-invoice').innerText = claim.invoice || '-';
+            // Дата процедури видалена
             document.getElementById('m-product').innerText = claim.product;
             document.getElementById('m-lot').innerText = claim.lot ? `(LOT: ${claim.lot})` : '';
 
