@@ -10,21 +10,23 @@ app = FastAPI()
 BITRIX_WEBHOOK_URL = "https://bitrix.emet.in.ua/rest/2049/24pv36uotghswqwa/"
 SMART_PROCESS_ID = 1038
 
-# Вставте сюди нові коди полів (усі вони тепер мають бути типу "РЯДОК")
+# --- ОНОВЛЕНІ КОДИ ПОЛІВ (Згідно з вашим повідомленням) ---
 FIELDS_MAP = {
     "title": "TITLE",
-    "product": "UF_CRM_4_1769005557",    # Код нового поля "Препарат" (Рядок)
-    "lot": "UF_CRM_4_1769003758",    # Код поля "LOT"
-    "invoice": "UF_CRM_4_1769003770",# Код поля "№ Реалізації"
-    "claim_type": "UF_CRM_4_1769005573", # Код нового поля "Тип рекламації" (Рядок)
-    "details": "UF_CRM_4_1769003784",# Код поля "Деталі"
-    "manager": "UF_CRM_4_1769005441",    # Код поля "Менеджер" (Рядок)
-    "files": "UF_CRM_4_1769005413"       # Код поля "Файли" (Файл, множинне)
+    "lot": "UF_CRM_4_1769003758",         # LOT (Рядок)
+    "invoice": "UF_CRM_4_1769003770",     # № Реалізації (Рядок)
+    "details": "UF_CRM_4_1769003784",     # Деталі анкети (Рядок)
+    
+    # Нові коди:
+    "files": "UF_CRM_4_1769005413",       # Медіа докази (Файл)
+    "manager": "UF_CRM_4_1769005441",     # Менеджер (Рядок)
+    "product": "UF_CRM_4_1769005557",     # Препарат (Рядок)
+    "claim_type": "UF_CRM_4_1769005573"   # Тип рекламації (Рядок)
 }
 
-# Словник для перекладу англійських кодів сайту в красивий текст для Бітрікса
+# Перекладач кодів сайту в зрозумілий текст для Бітрікса
 TYPE_TRANSLATION = {
-    "defect_pack": "Брак упаковки",
+    "defect_pack": "Неякісна упаковка",
     "quality": "Якість препарату",
     "effectiveness": "Ефективність",
     "side_effect": "Побічна дія",
@@ -50,14 +52,14 @@ async def submit_claim(
         for question, answer in details_dict.items():
             formatted_text += f"{question}:\n{answer}\n\n"
 
-        # 2. Перекладаємо тип (defect_pack -> Брак упаковки)
+        # 2. Перекладаємо тип (наприклад, defect_pack -> Неякісна упаковка)
         readable_type = TYPE_TRANSLATION.get(type, type)
 
-        # 3. Збираємо дані (все текстом!)
+        # 3. Збираємо основні поля
         bx_fields = {
             FIELDS_MAP["title"]: f"Рекламація: {client}",
-            FIELDS_MAP["product"]: product,       # Просто текст "VITARAN"
-            FIELDS_MAP["claim_type"]: readable_type, # Просто текст "Брак упаковки"
+            FIELDS_MAP["product"]: product,          # Текст
+            FIELDS_MAP["claim_type"]: readable_type, # Текст
             FIELDS_MAP["lot"]: lot,
             FIELDS_MAP["invoice"]: invoice or "Не вказано",
             FIELDS_MAP["details"]: formatted_text,
@@ -65,23 +67,21 @@ async def submit_claim(
             "OPENED": "Y"
         }
 
-        # 4. Обробка файлів
+        # 4. Обробка файлів (завантажуємо в поле Медіа докази)
         if files:
             file_data_list = []
             for file in files:
                 content = await file.read()
+                # Кодуємо файл у base64 для передачі в Бітрікс
                 b64 = base64.b64encode(content).decode('utf-8')
                 file_data_list.append({
                     "fileData": [file.filename, b64]
                 })
-            # Якщо ви створили поле для файлів, розкоментуйте цей рядок:
-            if "files" in FIELDS_MAP and FIELDS_MAP["files"] != "UF_CRM_XXXXXXXX":
-                 bx_fields[FIELDS_MAP["files"]] = file_data_list
-            else:
-                 # Якщо поля немає, пишемо імена файлів в текст
-                 bx_fields[FIELDS_MAP["details"]] += "\n\n[Файли додано, але поле для файлів не налаштовано]"
+            
+            # Додаємо файли до полів
+            bx_fields[FIELDS_MAP["files"]] = file_data_list
 
-        # 5. Відправка
+        # 5. Відправка запиту в Бітрікс
         payload = {
             "entityTypeId": SMART_PROCESS_ID,
             "fields": bx_fields
@@ -90,6 +90,7 @@ async def submit_claim(
         response = requests.post(f"{BITRIX_WEBHOOK_URL}crm.item.add", json=payload)
         result = response.json()
 
+        # 6. Обробка відповіді
         if "error" in result:
             print("Bitrix Error:", result)
             raise HTTPException(status_code=500, detail=f"Помилка Бітрикс: {result.get('error_description')}")
