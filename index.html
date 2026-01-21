@@ -12,7 +12,6 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .loader { border-top-color: #3B82F6; animation: spinner 1.5s linear infinite; }
         @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        /* Стиль для обов'язкових полів */
         .required-mark::after { content: " *"; color: red; }
     </style>
 </head>
@@ -54,9 +53,10 @@
                             <option value="" disabled selected>Оберіть тип...</option>
                             <option value="defect_pack">📦 Брак упаковки</option>
                             <option value="quality">💎 Якість препарату</option>
-                            <option value="effectiveness">📉 Ефективність (не спрацював)</option>
+                            <option value="effectiveness">📉 Ефективність</option>
                             <option value="side_effect">🤒 Побічна дія</option>
                             <option value="complication">🚑 Ускладнення</option>
+                            <option value="other">📝 Інше</option>
                         </select>
                     </div>
 
@@ -91,16 +91,14 @@
 
                     <div id="dynamic-form-area" class="hidden mb-5 border-t pt-4">
                         <h3 class="text-sm font-bold text-gray-700 mb-3"><i class="fa-solid fa-list-check mr-1"></i>Деталі інциденту</h3>
-                        <div id="dynamic-fields" class="space-y-3">
-                            </div>
+                        <div id="dynamic-fields" class="space-y-3"></div>
                     </div>
 
                     <div class="mb-6">
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Фото/Відео/Схема</label>
-                        <p class="text-xs text-gray-400 mb-2">Завантажте фото "До/Після" або фото схеми розмітки</p>
-                        <label class="flex flex-col items-center justify-center w-full h-24 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Медіа докази</label>
+                        <label class="flex flex-col items-center justify-center w-full h-20 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition">
                             <i class="fa-solid fa-camera text-gray-400 text-xl"></i>
-                            <span class="text-xs text-gray-500 mt-1">Натисніть для вибору файлів</span>
+                            <span class="text-xs text-gray-500 mt-1">Додати фото/відео</span>
                             <input id="dropzone-file" type="file" class="hidden" multiple accept="image/*,video/*" onchange="previewFiles()" />
                         </label>
                         <div id="preview-area" class="flex gap-2 mt-2 overflow-x-auto p-1"></div>
@@ -116,13 +114,85 @@
 
         <div id="tab-history" class="hidden">
             <h2 class="text-lg font-semibold mb-4 px-1">Мої заявки</h2>
-            <div id="history-container" class="space-y-3"></div>
+            
+            <div id="group-active" class="mb-6 hidden">
+                <h3 class="text-xs font-bold text-gray-500 uppercase mb-2 px-1 flex items-center">
+                    <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>В роботі
+                </h3>
+                <div id="active-list" class="space-y-3"></div>
+            </div>
+
+            <div id="group-archive" class="mb-6 hidden">
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-2 px-1 flex items-center">
+                    <span class="w-2 h-2 bg-gray-300 rounded-full mr-2"></span>Архів
+                </h3>
+                <div id="archive-list" class="space-y-3 opacity-80"></div>
+            </div>
+
             <div id="empty-state" class="hidden text-center mt-12 text-gray-400">
                 <i class="fa-regular fa-folder-open text-4xl mb-3"></i>
                 <p>Історія порожня</p>
             </div>
         </div>
     </main>
+
+    <div id="details-modal" class="fixed inset-0 z-40 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity backdrop-blur-sm" onclick="closeModal()"></div>
+        <div class="fixed inset-0 z-10 overflow-y-auto">
+            <div class="flex min-h-full items-end justify-center p-0 text-center sm:items-center sm:p-0">
+                <div class="relative transform overflow-hidden bg-white text-left shadow-xl transition-all w-full h-full sm:h-auto sm:rounded-xl flex flex-col sm:max-w-lg sm:my-8">
+                    
+                    <div class="bg-gray-50 px-4 py-4 border-b flex justify-between items-center shrink-0">
+                        <div>
+                            <div class="text-xs text-gray-400 font-bold uppercase tracking-wider" id="m-id">#0000</div>
+                            <h3 class="text-lg font-bold leading-6 text-gray-900" id="m-type">Тип</h3>
+                        </div>
+                        <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-gray-200 text-gray-500 hover:bg-gray-300 flex items-center justify-center">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+
+                    <div class="px-5 py-5 overflow-y-auto flex-1 bg-white">
+                        <div class="mb-5 flex justify-between items-center bg-gray-50 p-3 rounded-lg">
+                            <span class="text-sm font-medium text-gray-600">Статус заявки:</span>
+                            <span id="m-status-badge" class="px-3 py-1 rounded-full text-xs font-bold uppercase">...</span>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div>
+                                <label class="text-xs text-gray-400 uppercase font-bold">Клієнт</label>
+                                <p id="m-client" class="text-gray-900 font-medium"></p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-xs text-gray-400 uppercase font-bold">№ Реалізації</label>
+                                    <p id="m-invoice" class="text-gray-900 font-medium"></p>
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-400 uppercase font-bold">Дата процедури</label>
+                                    <p id="m-date-proc" class="text-gray-900 font-medium"></p>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-400 uppercase font-bold">Препарат / ЛОТ</label>
+                                <p class="text-blue-600 font-bold text-lg"><span id="m-product"></span> <span id="m-lot" class="text-gray-500 font-normal text-sm ml-2"></span></p>
+                            </div>
+                        </div>
+
+                        <div id="m-dynamic-details" class="mt-6 border-t pt-4">
+                            <h4 class="text-sm font-bold text-gray-800 mb-3"><i class="fa-solid fa-clipboard-list mr-2 text-blue-500"></i>Деталі анкети</h4>
+                            <div id="m-dynamic-content" class="text-sm space-y-2 bg-blue-50 p-3 rounded-lg">
+                                </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 px-4 py-3 shrink-0 border-t flex justify-center">
+                        <button type="button" class="w-full justify-center rounded-lg bg-white px-3 py-3 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50" onclick="closeModal()">Закрити</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <nav class="bg-white border-t border-gray-200 fixed bottom-0 w-full z-20 pb-safe">
         <div class="flex justify-around items-center h-16">
@@ -138,53 +208,67 @@
     </nav>
 
     <script>
-        // --- КОНФІГУРАЦІЯ ПОЛІВ ДЛЯ РІЗНИХ ПРЕПАРАТІВ (Згідно DOCX) ---
+        // --- КОНФІГУРАЦІЯ (Те саме, що й було) ---
         const FORMS_CONFIG = {
             'VITARAN': [
-                { id: 'tool', label: 'Чим проводили (голка/канюля, розмір)', type: 'text' },
-                { id: 'anesthesia', label: 'Знеболення (препарат)', type: 'text' },
-                { id: 'technique', label: 'Техніка виконання', type: 'textarea' },
-                { id: 'post_proc', label: 'Особливості постпроцедурного періоду', type: 'textarea' },
-                { id: 'allergies', label: 'Алергії в анамнезі', type: 'text' },
-                { id: 'cosmetics', label: 'Яку косметику використовує пацієнт?', type: 'text' }
+                { id: 'tool', label: 'Чим проводили', type: 'text' },
+                { id: 'anesthesia', label: 'Знеболення', type: 'text' },
+                { id: 'technique', label: 'Техніка', type: 'textarea' },
+                { id: 'post_proc', label: 'Постпроцедурний період', type: 'textarea' },
+                { id: 'allergies', label: 'Алергії', type: 'text' },
+                { id: 'cosmetics', label: 'Косметика пацієнта', type: 'text' }
             ],
             'NEURONOX': [
-                { id: 'diluent', label: 'Чим відновлювали (Натрій хлор 0.9%?) та об\'єм', type: 'text' },
+                { id: 'diluent', label: 'Чим відновлювали / об\'єм', type: 'text' },
                 { id: 'date_dilution', label: 'Дата розведення', type: 'date' },
-                { id: 'prev_botox', label: 'Попередня ботулінотерапія (дата, препарат)', type: 'textarea' },
-                { id: 'illness', label: 'Захворювання (гострі, хронічні)', type: 'text' },
-                { id: 'meds', label: 'Які ліки приймає зараз?', type: 'text' }
+                { id: 'prev_botox', label: 'Попередня ботулінотерапія', type: 'textarea' },
+                { id: 'illness', label: 'Захворювання', type: 'text' },
+                { id: 'meds', label: 'Ліки зараз', type: 'text' }
             ],
             'NEURAMIS': [
-                { id: 'tool', label: 'Інструмент (голка/канюля)', type: 'text' },
-                { id: 'prev_contour', label: 'Контурна пластика в цій зоні раніше?', type: 'text' },
-                { id: 'hyaluronidase', label: 'Чи застосовували раніше гіалуронідазу?', type: 'select', options: ['Ні', 'Так'] },
-                { id: 'status_localis', label: 'Status Localis (дані огляду)', type: 'textarea' }
+                { id: 'tool', label: 'Інструмент', type: 'text' },
+                { id: 'prev_contour', label: 'Контурна раніше?', type: 'text' },
+                { id: 'hyaluronidase', label: 'Гіалуронідаза?', type: 'select', options: ['Ні', 'Так'] },
+                { id: 'status_localis', label: 'Status Localis', type: 'textarea' }
             ],
             'ELLANSE': [
-                { id: 'vaccination', label: 'Дата останньої вакцинації', type: 'text' },
-                { id: 'autoimmune', label: 'Аутоімунні захворювання', type: 'text' },
-                { id: 'diet', label: 'Особлива дієта?', type: 'text' },
-                { id: 'tool', label: 'Інструмент (розмір)', type: 'text' }
+                { id: 'vaccination', label: 'Вакцинація', type: 'text' },
+                { id: 'autoimmune', label: 'Аутоімунні', type: 'text' },
+                { id: 'diet', label: 'Дієта', type: 'text' },
+                { id: 'tool', label: 'Інструмент', type: 'text' }
             ],
             'PETARAN': [
-                { id: 'dilution_lido', label: 'Чи додавали лідокаїн при розведенні?', type: 'select', options: ['Ні', 'Так'] },
-                { id: 'massage', label: 'Чи робив пацієнт масаж (дотримання інструкції)?', type: 'select', options: ['Так', 'Ні', 'Не знаю'] },
-                { id: 'allergies_poly', label: 'Алергія на полінуклеотиди?', type: 'text' }
+                { id: 'dilution_lido', label: 'Лідокаїн при розведенні?', type: 'select', options: ['Ні', 'Так'] },
+                { id: 'massage', label: 'Масаж?', type: 'select', options: ['Так', 'Ні', 'Не знаю'] },
+                { id: 'allergies_poly', label: 'Алергія на полінукл.?', type: 'text' }
             ],
             'OTHER': [
-                { id: 'problem_desc', label: 'Детальний опис проблеми', type: 'textarea' }
+                { id: 'problem_desc', label: 'Опис проблеми', type: 'textarea' }
             ]
         };
 
-        // --- ЛОГИКА ---
-        
+        const STATUS_LABELS = {
+            'new': { text: 'Нова', class: 'bg-blue-100 text-blue-700 border-blue-200' },
+            'work': { text: 'В роботі', class: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
+            'done': { text: 'Вирішено', class: 'bg-green-100 text-green-700 border-green-200' },
+            'reject': { text: 'Відмова', class: 'bg-red-100 text-red-700 border-red-200' }
+        };
+
+        const TYPE_LABELS = {
+            'defect_pack': '📦 Брак упаковки',
+            'quality': '💎 Якість',
+            'effectiveness': '📉 Ефективність',
+            'side_effect': '🤒 Побічна дія',
+            'complication': '🚑 Ускладнення'
+            'other': '📝 Інше'
+        };
+
+        // --- ЛОГІКА ДИНАМІЧНОЇ ФОРМИ ---
         function renderDynamicForm() {
             const product = document.getElementById('product').value;
             const container = document.getElementById('dynamic-form-area');
             const fieldsContainer = document.getElementById('dynamic-fields');
             
-            // Очистка
             fieldsContainer.innerHTML = '';
             
             if (!product || !FORMS_CONFIG[product]) {
@@ -194,34 +278,24 @@
 
             container.classList.remove('hidden');
             
-            // Генерація полів
             FORMS_CONFIG[product].forEach(field => {
                 let html = '';
+                // Зберігаємо label в data-attribute, щоб потім показати в історії
                 if (field.type === 'textarea') {
-                    html = `<div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">${field.label}</label>
-                        <textarea name="custom_${field.id}" rows="2" class="w-full bg-white border border-gray-300 rounded p-2 text-sm focus:border-blue-500 outline-none"></textarea>
-                    </div>`;
+                    html = `<div><label class="block text-xs font-medium text-gray-600 mb-1">${field.label}</label><textarea data-label="${field.label}" id="custom_${field.id}" rows="2" class="w-full bg-white border border-gray-300 rounded p-2 text-sm outline-none"></textarea></div>`;
                 } else if (field.type === 'select') {
                     const opts = field.options.map(o => `<option>${o}</option>`).join('');
-                    html = `<div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">${field.label}</label>
-                        <select name="custom_${field.id}" class="w-full bg-white border border-gray-300 rounded p-2 text-sm focus:border-blue-500 outline-none">${opts}</select>
-                    </div>`;
+                    html = `<div><label class="block text-xs font-medium text-gray-600 mb-1">${field.label}</label><select data-label="${field.label}" id="custom_${field.id}" class="w-full bg-white border border-gray-300 rounded p-2 text-sm outline-none">${opts}</select></div>`;
                 } else {
-                    html = `<div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">${field.label}</label>
-                        <input type="${field.type}" name="custom_${field.id}" class="w-full bg-white border border-gray-300 rounded p-2 text-sm focus:border-blue-500 outline-none">
-                    </div>`;
+                    html = `<div><label class="block text-xs font-medium text-gray-600 mb-1">${field.label}</label><input type="${field.type}" data-label="${field.label}" id="custom_${field.id}" class="w-full bg-white border border-gray-300 rounded p-2 text-sm outline-none"></div>`;
                 }
                 fieldsContainer.insertAdjacentHTML('beforeend', html);
             });
         }
 
-        // --- АВТОРИЗАЦІЯ І ЗАВАНТАЖЕННЯ (Як в минулій версії) ---
+        // --- АВТОРИЗАЦІЯ ---
         let currentUser = localStorage.getItem('emet_user');
-        const MOCK_DB = []; // Порожній старт
-
+        
         function checkAuth() {
             if (currentUser) {
                 document.getElementById('login-screen').classList.add('hidden');
@@ -231,7 +305,6 @@
                 document.getElementById('login-screen').classList.remove('hidden');
             }
         }
-
         function loginUser() {
             const name = document.getElementById('login-name').value.trim();
             if (name) {
@@ -241,7 +314,7 @@
             }
         }
 
-        // --- ОБРОБКА ФОРМИ ---
+        // --- SUBMIT ---
         function submitForm(event) {
             event.preventDefault();
             const btnText = document.getElementById('btn-text');
@@ -250,27 +323,32 @@
             btnText.innerText = 'Відправка...';
             btnLoader.classList.remove('hidden');
 
-            // Збираємо дані
-            const formData = {
+            const product = document.getElementById('product').value;
+            
+            // Збираємо динамічні поля
+            let customData = {};
+            if (FORMS_CONFIG[product]) {
+                FORMS_CONFIG[product].forEach(field => {
+                    const el = document.getElementById(`custom_${field.id}`);
+                    if(el) customData[field.label] = el.value;
+                });
+            }
+
+            // Основні дані
+            const newClaim = {
+                id: Math.floor(Math.random() * 9000) + 1000,
+                date: new Date().toLocaleDateString(),
+                status: 'new',
                 type: document.getElementById('claimType').value,
                 client: document.getElementById('client').value,
                 invoice: document.getElementById('invoice').value,
-                product: document.getElementById('product').value,
+                product: product,
                 lot: document.getElementById('lot').value,
-                // Тут ми б зібрали всі динамічні поля
+                date_proc: document.getElementById('date_proc').value,
+                details: customData // Зберігаємо об'єкт з деталями
             };
 
-            // Імітація відправки в Бітрикс
             setTimeout(() => {
-                const newClaim = {
-                    id: Math.floor(Math.random() * 9000) + 1000,
-                    date: new Date().toLocaleDateString(),
-                    status: 'new',
-                    statusText: 'Нова заявка',
-                    ...formData
-                };
-                
-                // Зберігаємо в локальну "базу" для демо
                 let history = JSON.parse(localStorage.getItem('emet_history')) || [];
                 history.unshift(newClaim);
                 localStorage.setItem('emet_history', JSON.stringify(history));
@@ -278,57 +356,122 @@
                 btnText.innerText = 'Відправити рекламацію';
                 btnLoader.classList.add('hidden');
                 
-                alert('✅ Рекламацію успішно створено! \nДані передано в медичний відділ.');
+                alert('✅ Рекламацію створено!');
                 document.getElementById('claimForm').reset();
-                document.getElementById('preview-area').innerHTML = '';
                 document.getElementById('dynamic-form-area').classList.add('hidden');
-                
+                document.getElementById('preview-area').innerHTML = '';
                 switchTab('history');
-            }, 1500);
+            }, 1000);
         }
 
+        // --- RENDER HISTORY (NEW: GROUPING) ---
         function renderHistory() {
-            const container = document.getElementById('history-container');
+            const activeContainer = document.getElementById('active-list');
+            const archiveContainer = document.getElementById('archive-list');
+            const groupActive = document.getElementById('group-active');
+            const groupArchive = document.getElementById('group-archive');
             const emptyState = document.getElementById('empty-state');
-            container.innerHTML = '';
+            
+            activeContainer.innerHTML = '';
+            archiveContainer.innerHTML = '';
             
             let history = JSON.parse(localStorage.getItem('emet_history')) || [];
             
             if (history.length === 0) {
                 emptyState.classList.remove('hidden');
+                groupActive.classList.add('hidden');
+                groupArchive.classList.add('hidden');
                 return;
             }
             emptyState.classList.add('hidden');
 
-            history.forEach(item => {
-                const typeLabels = {
-                    'defect_pack': 'Брак упаковки',
-                    'quality': 'Якість',
-                    'effectiveness': 'Ефективність',
-                    'side_effect': 'Побічна дія',
-                    'complication': 'Ускладнення'
-                };
+            let hasActive = false;
+            let hasArchive = false;
 
-                const card = `
-                <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-3 relative overflow-hidden">
-                    <div class="absolute left-0 top-0 bottom-0 w-1 ${item.status === 'new' ? 'bg-blue-500' : 'bg-green-500'}"></div>
-                    <div class="flex justify-between items-start mb-1 pl-2">
+            history.forEach(item => {
+                const style = STATUS_LABELS[item.status] || STATUS_LABELS['new'];
+                const typeText = TYPE_LABELS[item.type] || item.type;
+                
+                // HTML картки (тепер з onclick)
+                const cardHtml = `
+                <div onclick="openModal(${item.id})" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 relative overflow-hidden active:scale-[0.98] transition cursor-pointer">
+                    <div class="absolute right-3 top-3 text-gray-300"><i class="fa-solid fa-chevron-right"></i></div>
+                    <div class="flex justify-between items-center mb-2 pr-6">
                         <span class="text-[10px] font-bold text-gray-400">#${item.id} • ${item.date}</span>
-                        <span class="bg-blue-50 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-blue-100 uppercase tracking-wide">${item.statusText}</span>
+                        <span class="${style.class} text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wide">${style.text}</span>
                     </div>
-                    <div class="pl-2">
-                        <h3 class="font-bold text-gray-800 text-sm">${item.client}</h3>
-                        <p class="text-xs text-gray-500 mb-1">РН: ${item.invoice}</p>
-                        <div class="flex items-center gap-2 mt-2">
-                            <span class="text-xs font-semibold bg-gray-100 px-2 py-1 rounded text-gray-600">${typeLabels[item.type] || item.type}</span>
-                            <span class="text-xs text-gray-500 border border-gray-200 px-2 py-1 rounded">${item.product}</span>
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-sm mb-1">${item.client}</h3>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="text-xs font-semibold bg-gray-100 px-2 py-1 rounded text-gray-600">${typeText}</span>
+                            <span class="text-xs text-blue-600 border border-blue-100 bg-blue-50 px-2 py-1 rounded">${item.product}</span>
                         </div>
                     </div>
                 </div>`;
-                container.innerHTML += card;
+
+                // Сортування по групах
+                if (['new', 'work'].includes(item.status)) {
+                    activeContainer.innerHTML += cardHtml;
+                    hasActive = true;
+                } else {
+                    archiveContainer.innerHTML += cardHtml;
+                    hasArchive = true;
+                }
             });
+
+            // Показуємо/ховаємо заголовки груп
+            groupActive.classList.toggle('hidden', !hasActive);
+            groupArchive.classList.toggle('hidden', !hasArchive);
         }
 
+        // --- MODAL LOGIC (NEW) ---
+        function openModal(id) {
+            let history = JSON.parse(localStorage.getItem('emet_history')) || [];
+            const claim = history.find(c => c.id === id);
+            if (!claim) return;
+
+            // Заповнюємо статику
+            document.getElementById('m-id').innerText = `#${claim.id}`;
+            document.getElementById('m-type').innerText = TYPE_LABELS[claim.type] || claim.type;
+            document.getElementById('m-client').innerText = claim.client;
+            document.getElementById('m-invoice').innerText = claim.invoice;
+            document.getElementById('m-date-proc').innerText = claim.date_proc || '-';
+            document.getElementById('m-product').innerText = claim.product;
+            document.getElementById('m-lot').innerText = claim.lot ? `(LOT: ${claim.lot})` : '';
+
+            // Статус
+            const style = STATUS_LABELS[claim.status] || STATUS_LABELS['new'];
+            const badge = document.getElementById('m-status-badge');
+            badge.className = `px-3 py-1 rounded-full text-xs font-bold uppercase ${style.class}`;
+            badge.innerText = style.text;
+
+            // Динамічні поля
+            const dynContainer = document.getElementById('m-dynamic-content');
+            dynContainer.innerHTML = '';
+            
+            if (claim.details && Object.keys(claim.details).length > 0) {
+                for (const [key, value] of Object.entries(claim.details)) {
+                    if(value) {
+                        dynContainer.innerHTML += `
+                        <div class="mb-2 border-b border-blue-100 last:border-0 pb-1 last:pb-0">
+                            <span class="text-xs text-gray-500 uppercase font-bold block">${key}:</span>
+                            <span class="text-gray-900 font-medium">${value}</span>
+                        </div>`;
+                    }
+                }
+                document.getElementById('m-dynamic-details').classList.remove('hidden');
+            } else {
+                document.getElementById('m-dynamic-details').classList.add('hidden');
+            }
+
+            document.getElementById('details-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('details-modal').classList.add('hidden');
+        }
+
+        // --- TAB SWITCH ---
         function switchTab(tabName) {
             document.getElementById('tab-new').classList.toggle('hidden', tabName !== 'new');
             document.getElementById('tab-history').classList.toggle('hidden', tabName !== 'history');
