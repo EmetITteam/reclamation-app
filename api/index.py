@@ -13,10 +13,17 @@ app = FastAPI()
 BITRIX_WEBHOOK_URL = "https://bitrix.emet.in.ua/rest/2049/24pv36uotghswqwa/"
 SMART_PROCESS_ID = 1038
 
-# --- НАЛАШТУВАННЯ СПОВІЩЕНЬ (ЗАПОВНІТЬ СВОЇ ДАНІ) ---
-TG_BOT_TOKEN = "ВАШ_ТОКЕН"
-TG_CHAT_ID = "ВАШ_CHAT_ID" 
-FIELD_MANAGER_EMAIL = "ufCrm4_1769090000" # Замініть на реальний код поля Email менеджера!
+# --- НАЛАШТУВАННЯ СПОВІЩЕНЬ ---
+TG_BOT_TOKEN = "ВАШ_ТОКЕН_БОТА"  # Отримайте у @BotFather
+TG_CHAT_ID = "ВАШ_CHAT_ID"       # ID чату/групи куди падатимуть заявки
+
+SMTP_SERVER = "smtp.gmail.com"
+SMTP_PORT = 587
+SMTP_USER = "noreply@emet.in.ua"      # З якої пошти відправляти
+SMTP_PASS = "cgme lnuf pytd widr" # Пароль додатка (App Password), не від скриньки!
+
+# Вставте сюди код поля, який ви створили у Кроці 1
+FIELD_MANAGER_EMAIL = "ufCrm4_1769084999 "
 
 # --- БАЗА ДАНИХ МЕНЕДЖЕРІВ ---
 MANAGERS_DB = {
@@ -78,6 +85,23 @@ def send_telegram(message):
         requests.post(url, json={"chat_id": TG_CHAT_ID, "text": message, "parse_mode": "HTML"})
     except Exception as e:
         print(f"TG Error: {e}")
+
+def send_email(to_email, subject, body):
+    if not to_email or not SMTP_USER or "ваш_" in SMTP_USER: return
+    try:
+        msg = MIMEMultipart()
+        msg['From'] = SMTP_USER
+        msg['To'] = to_email
+        msg['Subject'] = subject
+        msg.attach(MIMEText(body, 'html'))
+
+        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        server.starttls()
+        server.login(SMTP_USER, SMTP_PASS)
+        server.sendmail(SMTP_USER, to_email, msg.as_string())
+        server.quit()
+    except Exception as e:
+        print(f"Email Error: {e}")
 
 # --- 0. АВТОРИЗАЦІЯ ---
 @app.post("/api/login")
@@ -185,6 +209,56 @@ async def sync_status(data: Dict[str, List[int]] = Body(...)):
         return {"items": result['result']['items']}
     except Exception:
         return {"items": []}
+
+# --- 4. WEBHOOK ВІД БІТРІКС (ЗМІНА СТАТУСУ) ---
+@app.post("/api/webhook/status_update")
+async def status_update(
+    id: int = Form(...),         # ID елемента
+    stage_id: str = Form(...)    # Нова стадія (код)
+):
+    # Тут ми перевіряємо, чи є стадія фінальною (Успіх або Провал)
+    # Перевірте, які коди у ваших фінальних стадій (наприклад: WON, SUCCESS, FAIL, LOSE)
+    stage_upper = stage_id.upper()
+    
+    if "WON" in stage_upper or "SUCCESS" in stage_upper or "FAIL" in stage_upper or "LOSE" in stage_upper or "CLIENT" in stage_upper:
+        try:
+            # 1. Отримуємо заявку з Бітрікс, щоб знайти Email менеджера
+            r = requests.post(f"{BITRIX_WEBHOOK_URL}crm.item.get", json={
+                "entityTypeId": SMART_PROCESS_ID,
+                "id": id
+            })
+            item_data = r.json()
+            
+            if "result" not in item_data:
+                return {"status": "error", "message": "Item not found"}
+
+            item = item_data['result']['item']
+            manager_mail = item.get(FIELD_MANAGER_EMAIL) # Читаємо наше поле
+            client_name = item.get("title", "Без назви")
+            
+            if manager_mail:
+                # Визначаємо статус для тексту листа
+                is_success = "WON" in stage_upper or "SUCCESS" in stage_upper or "CLIENT" in stage_upper
+                status_text = "✅ ВИРІШЕНО" if is_success else "❌ ВІДМОВЛЕНО"
+                color = "#22c55e" if is_success else "#ef4444"
+                
+                body = f"""
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                    <h2 style="color: {color};">Статус вашої рекламації оновлено</h2>
+                    <p>Заявка <b>#{id}</b> ({client_name}) перейшла у статус:</p>
+                    <h1 style="color: {color}; margin: 20px 0;">{status_text}</h1>
+                    <p>Зайдіть у Service Desk, щоб переглянути деталі та офіційну відповідь.</p>
+                    <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+                    <a href="https://emet-service.vercel.app/" style="background: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Перейти до заявки</a>
+                </div>
+                """
+                send_email(manager_mail, f"Оновлення заявки #{id} [{status_text}]", body)
+                print(f"Email sent to {manager_mail} for item {id}")
+                
+        except Exception as e:
+            print(f"Webhook Error: {e}")
+
+    return {"status": "ok"}
 
 # --- 3. ОТРИМАННЯ КОМЕНТАРІВ (З ІМЕНАМИ - FINAL) ---
 @app.post("/api/get_comments")
