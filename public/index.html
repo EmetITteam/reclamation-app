@@ -730,7 +730,7 @@
             });
         }
 
-        // --- 6. ВІДОБРАЖЕННЯ ІСТОРІЇ ---
+        // --- 6. ВІДОБРАЖЕННЯ ІСТОРІЇ (ВИПРАВЛЕНО ПІД ВАШ КАНБАН) ---
         function renderHistory() {
             const h = JSON.parse(localStorage.getItem('emet_history')) || [];
             const c = document.getElementById('active-list');
@@ -743,24 +743,23 @@
                 let stClass = STATUS_CONFIG['new'].class;
                 let stText = 'Нова';
                 
+                // Якщо Бітрікс повернув стадію
                 if(x.bitrix_stage_id) {
                     const sid = x.bitrix_stage_id.toUpperCase();
                     
-                    // --- ЛОГІКА СТАТУСІВ (ОНОВЛЕНА ПІД ВАШ БІТРІКС) ---
-                    
-                    // 1. НОВА (DT1038_8:NEW)
+                    // 1. КОЛОНКА "НОВА" (Тільки NEW)
                     if(sid.includes(':NEW')) { 
                         stClass = STATUS_CONFIG['new'].class; stText = 'Нова'; 
                     }
-                    // 2. ВИРІШЕНО (Успішні фінальні стадії)
-                    else if(sid.includes('SUCCESS') || sid.includes('WON') || sid.includes('DONE') || sid.includes('COMPLETE')) { 
+                    // 2. КОЛОНКА "ВИКОНАНО" (CLIENT - це фінальна стадія у вас)
+                    else if(sid.includes(':CLIENT') || sid.includes('SUCCESS') || sid.includes('WON')) { 
                         stClass = STATUS_CONFIG['done'].class; stText = 'Вирішено'; 
                     }
-                    // 3. ВІДМОВА (Неуспішні фінальні)
+                    // 3. ВІДМОВА
                     else if(sid.includes('FAIL') || sid.includes('LOSE') || sid.includes('REJECT')) { 
                         stClass = STATUS_CONFIG['reject'].class; stText = 'Відмова'; 
                     }
-                    // 4. В РОБОТІ (PREPARATION, CLIENT і всі інші)
+                    // 4. КОЛОНКА "В РОБОТІ" (Всі інші, включаючи PREPARATION)
                     else { 
                         stClass = STATUS_CONFIG['work'].class; stText = 'В роботі'; 
                     }
@@ -777,21 +776,21 @@
                 </div>`;
             });
         }
-        // --- 7. МОДАЛЬНЕ ВІКНО ТА КОМЕНТАРІ ---
+        // --- 7. МОДАЛЬНЕ ВІКНО (ВИПРАВЛЕНО ВІДКРИТТЯ І СТАТУСИ) ---
         function openModal(id) {
             const h = JSON.parse(localStorage.getItem('emet_history')) || [];
-            // ВИПРАВЛЕНО: Шукаємо елемент і називаємо його 'c'
-            const c = h.find(item => item.id === id);
+            // Шукаємо по ID (числовому або рядковому)
+            const c = h.find(item => parseInt(item.id) === parseInt(id));
             if(!c) return;
             
-            // Заповнення інфо
+            // Заповнення текстів
             document.getElementById('m-id').innerText = `#${c.id}`;
             document.getElementById('m-type').innerText = TYPE_LABELS[c.type] || c.type;
             document.getElementById('m-client').innerText = c.client;
             document.getElementById('m-product').innerText = c.product;
             document.getElementById('m-lot').innerText = c.lot || '';
             
-            // --- ЛОГІКА СТАТУСІВ ДЛЯ МОДАЛКИ ---
+            // --- ЛОГІКА СТАТУСІВ (ДУБЛЮЄМО ТОЧНО ЯК У СПИСКУ) ---
             let stClass = STATUS_CONFIG['new'].class;
             let stText = 'Нова';
             
@@ -801,10 +800,10 @@
                 if(sid.includes(':NEW')) { 
                     stClass = STATUS_CONFIG['new'].class; stText = 'Нова'; 
                 }
-                else if(sid.includes('SUCCESS') || sid.includes('WON') || sid.includes('DONE') || sid.includes('COMPLETE')) { 
+                else if(sid.includes(':CLIENT') || sid.includes('SUCCESS') || sid.includes('WON')) { 
                     stClass = STATUS_CONFIG['done'].class; stText = 'Вирішено'; 
                 }
-                else if(sid.includes('FAIL') || sid.includes('LOSE') || sid.includes('REJECT')) { 
+                else if(sid.includes('FAIL') || sid.includes('LOSE')) { 
                     stClass = STATUS_CONFIG['reject'].class; stText = 'Відмова'; 
                 }
                 else { 
@@ -816,7 +815,7 @@
             badge.className = `px-3 py-1 rounded-full text-xs font-bold uppercase ${stClass}`;
             badge.innerText = stText;
             
-            // Анкета
+            // Заповнення анкети
             const dc = document.getElementById('m-dynamic-content'); 
             dc.innerHTML = '';
             if(c.details && Object.keys(c.details).length > 0) {
