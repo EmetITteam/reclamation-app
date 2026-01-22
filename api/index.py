@@ -10,21 +10,19 @@ app = FastAPI()
 BITRIX_WEBHOOK_URL = "https://bitrix.emet.in.ua/rest/2049/24pv36uotghswqwa/"
 SMART_PROCESS_ID = 1038
 
-# --- ОНОВЛЕНІ КОДИ ПОЛІВ (Згідно з вашим повідомленням) ---
+# --- ПРАВИЛЬНІ КОДИ (з вашої консолі) ---
 FIELDS_MAP = {
-    "title": "TITLE",
-    "lot": "UF_CRM_4_1769003758",         # LOT (Рядок)
-    "invoice": "UF_CRM_4_1769003770",     # № Реалізації (Рядок)
-    "details": "UF_CRM_4_1769003784",     # Деталі анкети (Рядок)
-    
-    # Нові коди:
-    "files": "UF_CRM_4_1769005413",       # Медіа докази (Файл)
-    "manager": "UF_CRM_4_1769005441",     # Менеджер (Рядок)
-    "product": "UF_CRM_4_1769005557",     # Препарат (Рядок)
-    "claim_type": "UF_CRM_4_1769005573"   # Тип рекламації (Рядок)
+    "title": "title",                      # Стандартне поле (маленькими)
+    "lot": "ufCrm4_1769003758",            # LOT
+    "invoice": "ufCrm4_1769003770",        # № Реалізації
+    "details": "ufCrm4_1769003784",        # Деталі анкети
+    "files": "ufCrm4_1769005413",          # Медіа докази
+    "manager": "ufCrm4_1769005441",        # Менеджер
+    "product": "ufCrm4_1769005557",        # Препарат
+    "claim_type": "ufCrm4_1769005573"      # Тип рекламації
 }
 
-# Перекладач кодів сайту в зрозумілий текст для Бітрікса
+# Перекладач
 TYPE_TRANSLATION = {
     "defect_pack": "Неякісна упаковка",
     "quality": "Якість препарату",
@@ -52,14 +50,14 @@ async def submit_claim(
         for question, answer in details_dict.items():
             formatted_text += f"{question}:\n{answer}\n\n"
 
-        # 2. Перекладаємо тип (наприклад, defect_pack -> Неякісна упаковка)
+        # 2. Перекладаємо тип
         readable_type = TYPE_TRANSLATION.get(type, type)
 
-        # 3. Збираємо основні поля
+        # 3. Збираємо поля
         bx_fields = {
             FIELDS_MAP["title"]: f"Рекламація: {client}",
-            FIELDS_MAP["product"]: product,          # Текст
-            FIELDS_MAP["claim_type"]: readable_type, # Текст
+            FIELDS_MAP["product"]: product,
+            FIELDS_MAP["claim_type"]: readable_type,
             FIELDS_MAP["lot"]: lot,
             FIELDS_MAP["invoice"]: invoice or "Не вказано",
             FIELDS_MAP["details"]: formatted_text,
@@ -67,21 +65,19 @@ async def submit_claim(
             "OPENED": "Y"
         }
 
-        # 4. Обробка файлів (завантажуємо в поле Медіа докази)
+        # 4. Обробка файлів
         if files:
             file_data_list = []
             for file in files:
                 content = await file.read()
-                # Кодуємо файл у base64 для передачі в Бітрікс
                 b64 = base64.b64encode(content).decode('utf-8')
                 file_data_list.append({
                     "fileData": [file.filename, b64]
                 })
             
-            # Додаємо файли до полів
             bx_fields[FIELDS_MAP["files"]] = file_data_list
 
-        # 5. Відправка запиту в Бітрікс
+        # 5. Відправка
         payload = {
             "entityTypeId": SMART_PROCESS_ID,
             "fields": bx_fields
@@ -90,7 +86,6 @@ async def submit_claim(
         response = requests.post(f"{BITRIX_WEBHOOK_URL}crm.item.add", json=payload)
         result = response.json()
 
-        # 6. Обробка відповіді
         if "error" in result:
             print("Bitrix Error:", result)
             raise HTTPException(status_code=500, detail=f"Помилка Бітрикс: {result.get('error_description')}")
