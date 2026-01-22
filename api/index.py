@@ -257,12 +257,20 @@ async def get_comments(data: Dict[str, int] = Body(...)):
         return {"comments": comments}
     except Exception: return {"comments": []}
 
-# --- 4. WEBHOOK ВІД БІТРІКС (ЗМІНА СТАТУСУ - FINAL 2.0) ---
+# --- 4. WEBHOOK ВІД БІТРІКС (РОЗДІЛЕННЯ ПОТОКІВ) ---
 @app.post("/api/webhook/status_update")
 async def status_update(
     id: str,
     stage_id: str
 ):
+    # --- НАЛАШТУВАННЯ ---
+    # Сюди будуть падати листи про НОВІ заявки
+    EMAIL_MED_DEPT = "itd@emet.in.ua"  # <--- ВПИШІТЬ ТУТ ПОШТУ ВІДДІЛУ
+    
+    # Посилання на ваш Бітрікс (щоб лікарі могли клікнути і перейти до заявки)
+    # Замініть 'your-domain' на вашу адресу (наприклад: emet.bitrix24.ua)
+    LINK_TO_CRM = f"https://bitrix.emet.in.ua/crm/type/{SMART_PROCESS_ID}/details"
+
     try:
         print(f"Webhook received: ID={id}, STAGE={stage_id}") 
 
@@ -278,14 +286,16 @@ async def status_update(
 
         real_id = int(clean_id) 
 
-        # 2. ПЕРЕВІРКА СТАДІЇ
+        # 2. АНАЛІЗ СТАДІЇ
         stage_upper = stage_id.upper()
         
+        # Словник синонімів для стадій
+        is_new = "NEW" in stage_upper or "НОВА" in stage_upper or "BEGIN" in stage_upper or "START" in stage_upper
         is_success = "WON" in stage_upper or "SUCCESS" in stage_upper or "CLIENT" in stage_upper or "ВЫПОЛНЕНО" in stage_upper or "ВИКОНАНО" in stage_upper
         is_fail = "FAIL" in stage_upper or "LOSE" in stage_upper or "REJECT" in stage_upper or "ВІДМОВА" in stage_upper or "ПРОВАЛ" in stage_upper
 
-        # 3. ЯКЩО СТАДІЯ ПІДХОДИТЬ -> ВІДПРАВЛЯЄМО ЛИСТ
-        if is_success or is_fail:
+        if is_new or is_success or is_fail:
+            # Запитуємо дані заявки
             r = requests.post(f"{BITRIX_WEBHOOK_URL}crm.item.get", json={
                 "entityTypeId": SMART_PROCESS_ID,
                 "id": real_id
@@ -297,30 +307,44 @@ async def status_update(
                 manager_mail = item.get(FIELD_MANAGER_EMAIL)
                 client_name = item.get("title", "Без назви")
                 
-                if manager_mail:
+                # --- СЦЕНАРІЙ 1: НОВА ЗАЯВКА -> МЕД. ВІДДІЛ ---
+                if is_new:
+                    subject = f"Нова рекламація #{real_id} від {client_name}"
+                    body = f"""
+                    <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                        <h2 style="color: #2563eb;">Поступила нова рекламація</h2>
+                        <p><b>Номер:</b> #{real_id}</p>
+                        <p><b>Клієнт:</b> {client_name}</p>
+                        <p>Будь ласка, розгляньте звернення та прийміть рішення.</p>
+                        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+                        <a href="{LINK_TO_CRM}/{real_id}/" style="background: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Відкрити в CRM</a>
+                    </div>
+                    """
+                    send_email(EMAIL_MED_DEPT, subject, body)
+                    print(f"New Ticket Email sent to MED DEPT: {EMAIL_MED_DEPT}")
+
+                # --- СЦЕНАРІЙ 2: РІШЕННЯ -> МЕНЕДЖЕР ---
+                elif (is_success or is_fail) and manager_mail:
                     status_text = "✅ ВИРІШЕНО" if is_success else "❌ ВІДМОВЛЕНО"
                     color = "#22c55e" if is_success else "#ef4444"
-                    app_link = "https://reclamation-app-eight.vercel.app/" 
+                    app_link = "https://emet-service.vercel.app/" # Ваше посилання
                     
                     body = f"""
-                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-                        <h2 style="color: {color};">Статус вашої рекламації оновлено</h2>
+                    <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                        <h2 style="color: {color};">Статус рекламації оновлено</h2>
                         <p>Заявка <b>#{real_id}</b> ({client_name}) перейшла у статус:</p>
                         <h1 style="color: {color}; margin: 20px 0;">{status_text}</h1>
-                        <p>Зайдіть у Service Desk, щоб переглянути деталі та офіційну відповідь.</p>
+                        <p>Зайдіть у Service Desk, щоб переглянути деталі.</p>
                         <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
                         <a href="{app_link}" style="background: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Перейти до заявки</a>
                     </div>
                     """
-                    send_email(manager_mail, f"Оновлення заявки #{real_id} [{status_text}]", body)
-                    print(f"Email sent to {manager_mail}")
+                    send_email(manager_mail, f"Результат заявки #{real_id} [{status_text}]", body)
+                    print(f"Result Email sent to MANAGER: {manager_mail}")
 
-        # Успішне завершення (всередині try)
         return {"status": "ok"}
 
     except Exception as e:
-        # Обробка помилок (як у get_comments)
         print(f"Webhook Error: {e}")
-        # Ми все одно повертаємо "ok", щоб Бітрікс не панікував і не слав повтори,
-        # але в логах Vercel ми побачимо помилку.
+        # Повертаємо OK, щоб Бітрікс не панікував
         return {"status": "ok", "error": str(e)}
