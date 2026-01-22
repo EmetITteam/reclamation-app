@@ -151,7 +151,8 @@ async def get_comments(data: Dict[str, int] = Body(...)):
         return {"comments": comments}
 
     except Exception:
-        return {"comments": []}# --- 3. ОТРИМАННЯ КОМЕНТАРІВ (З ІМЕНАМИ) ---
+        return {"comments": []}
+       # --- 3. ОТРИМАННЯ КОМЕНТАРІВ (З ІМЕНАМИ) ---
 @app.post("/api/get_comments")
 async def get_comments(data: Dict[str, int] = Body(...)):
     item_id = data.get('id')
@@ -176,7 +177,42 @@ async def get_comments(data: Dict[str, int] = Body(...)):
 
         raw_comments = result['result']
         comments = []
-        user_cache = {} # Кеш, щоб не запитувати одного й того ж юзера 10 разів
+        user_cache = {} 
+
+        # 2. Обробляємо кожен коментар
+        for c in raw_comments:
+            author_id = c.get('AUTHOR_ID')
+            author_name = "Медичний відділ" # Дефолтне ім'я
+
+            # Якщо є ID автора, дізнаємося його ім'я через API
+            if author_id:
+                if author_id in user_cache:
+                    author_name = user_cache[author_id]
+                else:
+                    try:
+                        u_res = requests.get(f"{BITRIX_WEBHOOK_URL}user.get", params={"ID": author_id})
+                        u_data = u_res.json()
+                        if "result" in u_data and u_data["result"]:
+                            user = u_data["result"][0]
+                            full_name = f"{user.get('NAME', '')} {user.get('LAST_NAME', '')}".strip()
+                            if full_name:
+                                author_name = full_name
+                            user_cache[author_id] = author_name
+                    except:
+                        pass 
+            
+            comments.append({
+                "id": c['ID'],
+                "text": c['COMMENT'],
+                "author": author_name, # <--- ТУТ ТЕПЕР ЗМІННА, А НЕ ТЕКСТ
+                "date": c['CREATED']
+            })
+
+        return {"comments": comments}
+
+    except Exception as e:
+        print("Error fetching comments:", str(e))
+        return {"comments": []}
 
         # 2. Обробляємо кожен коментар
         for c in raw_comments:
