@@ -612,6 +612,50 @@
                 showLogin();
             }
         }
+        // Вхід через форму
+        function loginManager(){ 
+            const email = document.getElementById('login-email').value; 
+            const pass = document.getElementById('login-password').value;
+            const btn = document.getElementById('btn-login');
+            const err = document.getElementById('login-error');
+
+            if(!email || !pass) {
+                err.innerText = "Введіть Email та Пароль";
+                err.classList.remove('hidden');
+                return;
+            }
+
+            btn.innerText = "Перевірка...";
+            err.classList.add('hidden');
+
+            fetch('/api/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ email: email, password: pass })
+            })
+            .then(r => r.json())
+            .then(data => {
+                btn.innerText = "Увійти";
+                if(data.status === 'success') {
+                    saveUserAndRedirect(data);
+                } else {
+                    err.innerText = data.message;
+                    err.classList.remove('hidden');
+                }
+            })
+            .catch(() => {
+                btn.innerText = "Увійти";
+                err.innerText = "Помилка сервера";
+                err.classList.remove('hidden');
+            });
+        }
+
+        function saveUserAndRedirect(data) {
+            localStorage.setItem('emet_user', data.name);
+            localStorage.setItem('emet_email', data.email);
+            window.history.replaceState({}, document.title, "/");
+            location.reload();
+        }
 
         // --- ДОБАВИТЬ ЭТИ ФУНКЦИИ ДЛЯ ПЕРЕКЛЮЧЕНИЯ ЭКРАНОВ ---
         function showApp(user, email) {
