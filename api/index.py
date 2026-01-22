@@ -20,6 +20,9 @@ FIELD_MANAGER_EMAIL = "ufCrm4_1769090000" # Замініть на реальни
 
 # --- БАЗА ДАНИХ МЕНЕДЖЕРІВ ---
 MANAGERS_DB = {
+    # ТЕСТОВИЙ АКАУНТ
+    "itd@emet.in.ua": {"pass": "123", "name": "Евгения Малькова", "phone": "380634457827"},
+    # ІНШІ МЕНЕДЖЕРИ
     "sm.kiev4@emet.in.ua": {"pass": "CrmEmet83a", "name": "Бойко Ольга", "phone": "380979590833"},
     "ssm.kharkov1@emet.in.ua": {"pass": "CrmEmet19f", "name": "Золотченко Олена", "phone": "380675228279"},
     "sm.odessa2@emet.in.ua": {"pass": "CrmEmet47z", "name": "Каратеева Олена", "phone": "380676360299"},
