@@ -600,38 +600,94 @@
         // --- 2. АВТОРИЗАЦІЯ ---
         let currentUser = localStorage.getItem('emet_user');
         
+        // Перевірка авторизації при завантаженні
         function checkAuth() {
-            // Сценарій А: Перевірка URL параметру (Auto-Login)
-            const urlParams = new URLSearchParams(window.location.search);
-            const authEmail = urlParams.get('auth_email');
-
-            if (authEmail) {
-                // Якщо є параметр, пробуємо авторизуватися через сервер
-                fetch('/api/login', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ email: authEmail, is_auto: true })
-                })
-                .then(r => r.json())
-                .then(data => {
-                    if(data.status === 'success') {
-                        saveUserAndRedirect(data);
-                    } else {
-                        alert("Помилка авто-входу: " + data.message);
-                    }
-                });
-                return; // Чекаємо відповіді
-            }
-
-            // Звичайна перевірка
-            if(currentUser) { 
-                document.getElementById('login-screen').classList.add('hidden'); 
-                document.getElementById('current-user-display').innerText = currentUser; 
-                renderHistory(); 
-                syncHistory();
+            const user = localStorage.getItem('emet_user');
+            const email = localStorage.getItem('emet_email');
+            
+            if (user && email) {
+                showApp(user, email);
+                loadHistoryFromServer(email); // <--- ВАЖЛИВО: Вантажимо з сервера!
             } else {
-                document.getElementById('login-screen').classList.remove('hidden');
+                showLogin();
             }
+        }
+
+        // --- ДОБАВИТЬ ЭТИ ФУНКЦИИ ДЛЯ ПЕРЕКЛЮЧЕНИЯ ЭКРАНОВ ---
+        function showApp(user, email) {
+            // Прячем экран логина
+            document.getElementById('login-screen').classList.add('hidden');
+            // Показываем имя в шапке
+            document.getElementById('current-user-display').innerText = user;
+        }
+
+        function showLogin() {
+            // Показываем экран логина
+            document.getElementById('login-screen').classList.remove('hidden');
+        }
+        // --- НОВА ФУНКЦІЯ: ЗАВАНТАЖЕННЯ З СЕРВЕРА ---
+        async function loadHistoryFromServer(email) {
+           // БЫЛО: const list = document.getElementById('history-list');
+           // СТАЛО:
+            const list = document.getElementById('active-list');
+            list.innerHTML = '<div class="text-center text-gray-400 py-4"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Завантаження історії...</div>';
+
+            try {
+                const formData = new FormData();
+                formData.append('email', email);
+
+                const response = await fetch('/api/get_history', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                renderHistory(data.history); // Малюємо те, що прийшло з сервера
+                
+            } catch (error) {
+                console.error('Помилка завантаження історії:', error);
+                list.innerHTML = '<div class="text-center text-red-400">Не вдалося завантажити історію</div>';
+            }
+        }
+
+        // Функція малювання списку (оновлена)
+        function renderHistory(historyItems) {
+            // БЫЛО: const list = document.getElementById('history-list');
+           // СТАЛО:
+            с const list = document.getElementById('active-list');
+            list.innerHTML = ''; // Очистити список
+
+            if (!historyItems || historyItems.length === 0) {
+                list.innerHTML = '<div class="text-center text-gray-400 py-4">Історія звернень порожня</div>';
+                return;
+            }
+
+            historyItems.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'border-l-4 border-blue-500 bg-gray-50 p-3 rounded shadow-sm hover:bg-white transition';
+                // Ми використовуємо класи кольорів, які передав Python (item.color)
+                // Але оскільки Tailwind не бачить їх динамічно, продублюємо логіку тут або просто використаємо стиль
+                
+                // Простий хак для кольорів, якщо класи не підтягнуться
+                let statusStyle = 'color: #ca8a04;'; // yellow
+                if(item.status === 'Вирішено') statusStyle = 'color: #16a34a;'; // green
+                if(item.status === 'Відмовлено') statusStyle = 'color: #dc2626;'; // red
+                if(item.status === 'Нова') statusStyle = 'color: #2563eb;'; // blue
+
+                div.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="font-bold text-gray-700">Заявка #${item.id}</div>
+                            <div class="text-xs text-gray-500">${item.title}</div>
+                            <div class="text-xs text-gray-400 mt-1">${item.date}</div>
+                        </div>
+                        <div class="text-sm font-bold" style="${statusStyle}">
+                            ${item.status}
+                        </div>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
         }
 
         // Вхід через форму (Сценарій Б)
