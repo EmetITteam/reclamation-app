@@ -115,43 +115,7 @@ async def sync_status(data: Dict[str, List[int]] = Body(...)):
     except Exception:
         return {"items": []}
 
-# 3. ОТРИМАННЯ КОМЕНТАРІВ
-@app.post("/api/get_comments")
-async def get_comments(data: Dict[str, int] = Body(...)):
-    item_id = data.get('id')
-    if not item_id:
-        return {"comments": []}
 
-    try:
-        # Отримуємо коментарі з Таймлайну
-        payload = {
-            "filter": {
-                "ENTITY_ID": item_id,
-                "ENTITY_TYPE": f"dynamic_{SMART_PROCESS_ID}", # Тип сутності
-                "TYPE_ID": "COMMENT" # Тільки коментарі
-            },
-            "order": {"ID": "DESC"} # Нові зверху
-        }
-
-        response = requests.post(f"{BITRIX_WEBHOOK_URL}crm.timeline.comment.list", json=payload)
-        result = response.json()
-
-        if "error" in result:
-            return {"comments": []}
-
-        comments = []
-        for c in result['result']:
-            comments.append({
-                "id": c['ID'],
-                "text": c['COMMENT'],
-                "author": c.get('AUTHOR', {}).get('NAME', 'Менеджер'), # Ім'я автора
-                "date": c['CREATED']
-            })
-
-        return {"comments": comments}
-
-    except Exception:
-        return {"comments": []}
        # --- 3. ОТРИМАННЯ КОМЕНТАРІВ (З ІМЕНАМИ) ---
 @app.post("/api/get_comments")
 async def get_comments(data: Dict[str, int] = Body(...)):
