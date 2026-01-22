@@ -45,8 +45,16 @@
     </div>
 
     <header class="bg-white shadow-sm p-4 flex justify-between items-center z-10 shrink-0">
-        <h1 class="text-lg font-bold text-blue-800 flex items-center gap-2"><i class="fa-solid fa-notes-medical"></i> EMET Service Desk</h1>
-        <div class="text-xs text-right"><div class="text-gray-400">Користувач</div><div class="font-bold" id="current-user-display">...</div></div>
+        <h1 class="text-lg font-bold text-blue-800 flex items-center gap-2">
+            <i class="fa-solid fa-notes-medical"></i> EMET Service Desk
+        </h1>
+        <div class="text-xs text-right">
+            <div class="text-gray-400">Користувач</div>
+            <div class="font-bold mb-1" id="current-user-display">...</div>
+            <button onclick="logoutUser()" class="text-red-500 font-bold hover:text-red-700 hover:underline">
+                <i class="fa-solid fa-right-from-bracket mr-1"></i>Вийти
+            </button>
+        </div>
     </header>
 
     <main class="flex-1 overflow-y-auto p-3 pb-24 no-scrollbar">
@@ -985,6 +993,15 @@
                 
                 renderHistory();
                 syncHistory(); // Авто-оновлення при відкритті
+            }
+        }
+        function logoutUser() {
+            if(confirm('Ви дійсно хочете вийти з акаунту?')) {
+                localStorage.removeItem('emet_user');
+                localStorage.removeItem('emet_email');
+                // Можна також очистити історію, якщо хочете, щоб вона не була видна наступному юзеру
+                // localStorage.removeItem('emet_history'); 
+                location.reload();
             }
         }
 
