@@ -257,6 +257,51 @@ async def get_comments(data: Dict[str, int] = Body(...)):
         return {"comments": comments}
     except Exception: return {"comments": []}
 
+# --- 5. ОТРИМАННЯ ІСТОРІЇ ЗА EMAIL ---
+@app.post("/api/get_history")
+async def get_history(email: str = Form(...)):
+    try:
+        # Питаємо Бітрікс: дай список, де Email Менеджера = email
+        r = requests.post(f"{BITRIX_WEBHOOK_URL}crm.item.list", json={
+            "entityTypeId": SMART_PROCESS_ID,
+            "filter": { FIELD_MANAGER_EMAIL: email }, # Фільтруємо по нашому полю
+            "select": ["id", "title", "stageId", "createdTime"], # Беремо тільки потрібне
+            "order": { "id": "DESC" } # Сортуємо: найновіші зверху
+        })
+        data = r.json()
+
+        history = []
+        if "result" in data and "items" in data["result"]:
+            for item in data["result"]["items"]:
+                # Розшифровуємо стадію для краси (можна додати свої коди)
+                stage = item.get("stageId", "")
+                status_text = "В обробці"
+                status_color = "text-yellow-600" # Жовтий
+                
+                if "WON" in stage or "SUCCESS" in stage or "ВИКОНАНО" in stage:
+                    status_text = "Вирішено"
+                    status_color = "text-green-600"
+                elif "FAIL" in stage or "LOSE" in stage or "ВІДМОВА" in stage:
+                    status_text = "Відмовлено"
+                    status_color = "text-red-600"
+                elif "NEW" in stage:
+                     status_text = "Нова"
+                     status_color = "text-blue-600"
+
+                history.append({
+                    "id": item["id"],
+                    "title": item["title"],
+                    "date": item["createdTime"][:10], # Тільки дата (без часу)
+                    "status": status_text,
+                    "color": status_color
+                })
+        
+        return {"history": history}
+
+    except Exception as e:
+        print(f"History Error: {e}")
+        return {"history": []}
+
 # --- 4. WEBHOOK ВІД БІТРІКС (РОЗДІЛЕННЯ ПОТОКІВ) ---
 @app.post("/api/webhook/status_update")
 async def status_update(
@@ -348,3 +393,4 @@ async def status_update(
         print(f"Webhook Error: {e}")
         # Повертаємо OK, щоб Бітрікс не панікував
         return {"status": "ok", "error": str(e)}
+
