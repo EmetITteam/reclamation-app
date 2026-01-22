@@ -161,7 +161,7 @@
                     
                     <div id="m-comments-area" class="border-t pt-4">
                         <h4 class="text-sm font-bold mb-3 flex items-center text-gray-700">
-                            <i class="fa-regular fa-comments mr-2 text-blue-500"></i>Коментарі менеджера
+                            <i class="fa-regular fa-comments mr-2 text-blue-500"></i>Відповідь медичного відділу
                         </h4>
                         
                         <div id="m-comments-loader" class="text-center py-2 hidden">
@@ -745,12 +745,23 @@
                 
                 if(x.bitrix_stage_id) {
                     const sid = x.bitrix_stage_id.toUpperCase();
-                    if(sid.includes('NEW')) { stClass = STATUS_CONFIG['new'].class; stText = 'Нова'; }
-                    else if(sid.includes('SUCCESS') || sid.includes('WON')) { stClass = STATUS_CONFIG['done'].class; stText = 'Вирішено'; }
-                    else if(sid.includes('FAIL') || sid.includes('LOSE')) { stClass = STATUS_CONFIG['reject'].class; stText = 'Відмова'; }
-                    else { stClass = STATUS_CONFIG['work'].class; stText = 'В роботі'; }
-                }
+                    console.log(`Заявка #${x.id} має стадію: ${sid}`); // <-- ДИВІТЬСЯ СЮДИ В КОНСОЛЬ (F12)
 
+                    // Логіка визначення кольору
+                    if(sid.includes('NEW')) { 
+                        stClass = STATUS_CONFIG['new'].class; stText = 'Нова'; 
+                    }
+                    // Додав більше варіантів для "Вирішено" (DONE, FINISH, COMPLETE)
+                    else if(sid.includes('SUCCESS') || sid.includes('WON') || sid.includes('DONE') || sid.includes('FINISH') || sid.includes('COMPLETE')) { 
+                        stClass = STATUS_CONFIG['done'].class; stText = 'Вирішено'; 
+                    }
+                    else if(sid.includes('FAIL') || sid.includes('LOSE') || sid.includes('REJECT')) { 
+                        stClass = STATUS_CONFIG['reject'].class; stText = 'Відмова'; 
+                    }
+                    else { 
+                        stClass = STATUS_CONFIG['work'].class; stText = 'В роботі'; 
+                    }
+                }
                 c.innerHTML += `
                 <div onclick="openModal(${x.id})" class="bg-white p-4 rounded-xl shadow-sm mb-3 border border-gray-100 cursor-pointer active:bg-gray-50 transition">
                     <div class="flex justify-between text-xs text-gray-400 font-bold mb-1">
@@ -779,12 +790,25 @@
             // Статус
             let stClass = STATUS_CONFIG['new'].class;
             let stText = 'Нова';
-            if(c.bitrix_stage_id) {
-                const sid = c.bitrix_stage_id.toUpperCase();
-                if(sid.includes('SUCCESS') || sid.includes('WON')) { stClass = STATUS_CONFIG['done'].class; stText = 'Вирішено'; }
-                else if(sid.includes('FAIL') || sid.includes('LOSE')) { stClass = STATUS_CONFIG['reject'].class; stText = 'Відмова'; }
-                else if(!sid.includes('NEW')) { stClass = STATUS_CONFIG['work'].class; stText = 'В роботі'; }
-            }
+            if(x.bitrix_stage_id) {
+                    const sid = x.bitrix_stage_id.toUpperCase();
+                    console.log(`Заявка #${x.id} має стадію: ${sid}`); // <-- ДИВІТЬСЯ СЮДИ В КОНСОЛЬ (F12)
+
+                    // Логіка визначення кольору
+                    if(sid.includes('NEW')) { 
+                        stClass = STATUS_CONFIG['new'].class; stText = 'Нова'; 
+                    }
+                    // Додав більше варіантів для "Вирішено" (DONE, FINISH, COMPLETE)
+                    else if(sid.includes('SUCCESS') || sid.includes('WON') || sid.includes('DONE') || sid.includes('FINISH') || sid.includes('COMPLETE')) { 
+                        stClass = STATUS_CONFIG['done'].class; stText = 'Вирішено'; 
+                    }
+                    else if(sid.includes('FAIL') || sid.includes('LOSE') || sid.includes('REJECT')) { 
+                        stClass = STATUS_CONFIG['reject'].class; stText = 'Відмова'; 
+                    }
+                    else { 
+                        stClass = STATUS_CONFIG['work'].class; stText = 'В роботі'; 
+                    }
+                }
             const badge = document.getElementById('m-status-badge');
             badge.className = `px-3 py-1 rounded-full text-xs font-bold uppercase ${stClass}`;
             badge.innerText = stText;
