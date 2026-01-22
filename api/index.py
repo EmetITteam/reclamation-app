@@ -116,7 +116,7 @@ async def sync_status(data: Dict[str, List[int]] = Body(...)):
         return {"items": []}
 
 
-       # --- 3. ОТРИМАННЯ КОМЕНТАРІВ (З ІМЕНАМИ) ---
+      # 3. ОТРИМАННЯ КОМЕНТАРІВ (З ІМЕНАМИ - FINAL)
 @app.post("/api/get_comments")
 async def get_comments(data: Dict[str, int] = Body(...)):
     item_id = data.get('id')
@@ -124,7 +124,7 @@ async def get_comments(data: Dict[str, int] = Body(...)):
         return {"comments": []}
 
     try:
-        # 1. Отримуємо коментарі
+        # 1. Отримуємо коментарі з таймлайну
         payload = {
             "filter": {
                 "ENTITY_ID": item_id,
@@ -133,6 +133,7 @@ async def get_comments(data: Dict[str, int] = Body(...)):
             },
             "order": {"ID": "DESC"}
         }
+        # Використовуємо POST для timeline
         response = requests.post(f"{BITRIX_WEBHOOK_URL}crm.timeline.comment.list", json=payload)
         result = response.json()
 
@@ -146,42 +147,7 @@ async def get_comments(data: Dict[str, int] = Body(...)):
         # 2. Обробляємо кожен коментар
         for c in raw_comments:
             author_id = c.get('AUTHOR_ID')
-            author_name = "Медичний відділ" # Дефолтне ім'я
-
-            # Якщо є ID автора, дізнаємося його ім'я через API
-            if author_id:
-                if author_id in user_cache:
-                    author_name = user_cache[author_id]
-                else:
-                    try:
-                        u_res = requests.get(f"{BITRIX_WEBHOOK_URL}user.get", params={"ID": author_id})
-                        u_data = u_res.json()
-                        if "result" in u_data and u_data["result"]:
-                            user = u_data["result"][0]
-                            full_name = f"{user.get('NAME', '')} {user.get('LAST_NAME', '')}".strip()
-                            if full_name:
-                                author_name = full_name
-                            user_cache[author_id] = author_name
-                    except:
-                        pass 
-            
-            comments.append({
-                "id": c['ID'],
-                "text": c['COMMENT'],
-                "author": author_name, # <--- ТУТ ТЕПЕР ЗМІННА, А НЕ ТЕКСТ
-                "date": c['CREATED']
-            })
-
-        return {"comments": comments}
-
-    except Exception as e:
-        print("Error fetching comments:", str(e))
-        return {"comments": []}
-
-        # 2. Обробляємо кожен коментар
-        for c in raw_comments:
-            author_id = c.get('AUTHOR_ID')
-            author_name = "Медичний відділ" # Дефолтне ім'я
+            author_name = "Медичний відділ" # За замовчуванням
 
             # Якщо є ID автора, дізнаємося його ім'я
             if author_id:
@@ -189,27 +155,34 @@ async def get_comments(data: Dict[str, int] = Body(...)):
                     author_name = user_cache[author_id]
                 else:
                     try:
+                        # GET запит, бо діагностика показала, що він працює
                         u_res = requests.get(f"{BITRIX_WEBHOOK_URL}user.get", params={"ID": author_id})
                         u_data = u_res.json()
+                        
+                        # Розбираємо відповідь: {'result': [{'NAME': '...', ...}]}
                         if "result" in u_data and u_data["result"]:
-                            user = u_data["result"][0]
-                            # Склеюємо Ім'я + Прізвище
-                            full_name = f"{user.get('NAME', '')} {user.get('LAST_NAME', '')}".strip()
+                            user = u_data["result"][0] # Беремо першого зі списку
+                            first = user.get('NAME', '')
+                            last = user.get('LAST_NAME', '')
+                            full_name = f"{first} {last}".strip()
+                            
                             if full_name:
                                 author_name = full_name
-                            user_cache[author_id] = author_name
-                    except:
-                        pass # Якщо не вдалося дізнатися ім'я, залишиться дефолтне
+                                user_cache[author_id] = author_name
+                    except Exception as e:
+                        print(f"User API Error: {e}")
+                        pass 
             
             comments.append({
                 "id": c['ID'],
                 "text": c['COMMENT'],
-                "author": author_name,
+                "author": author_name, # Тепер тут буде "Евгения Малькова"
                 "date": c['CREATED']
             })
 
         return {"comments": comments}
 
     except Exception as e:
-        print("Error fetching comments:", str(e))
+        print("Server Error:", str(e))
         return {"comments": []}
+       
