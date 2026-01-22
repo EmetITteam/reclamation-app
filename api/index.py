@@ -6,7 +6,7 @@ from typing import List, Optional, Dict, Any
 
 app = FastAPI()
 
-# --- ВАШІ НАЛАШТУВАННЯ ---
+# --- ВАШИ НАЛАШТУВАННЯ ---
 BITRIX_WEBHOOK_URL = "https://bitrix.emet.in.ua/rest/2049/24pv36uotghswqwa/"
 SMART_PROCESS_ID = 1038
 
@@ -16,10 +16,10 @@ FIELDS_MAP = {
     "lot": "ufCrm4_1769003758",
     "invoice": "ufCrm4_1769003770",
     "details": "ufCrm4_1769003784",
-    "files": "ufCrm4_1769005413",       # Файли (Медіа докази)
-    "manager": "ufCrm4_1769005441",     # Менеджер
-    "product": "ufCrm4_1769005557",     # Препарат
-    "claim_type": "ufCrm4_1769005573"   # Тип рекламації
+    "files": "ufCrm4_1769005413",
+    "manager": "ufCrm4_1769005441",
+    "product": "ufCrm4_1769005557",
+    "claim_type": "ufCrm4_1769005573"
 }
 
 TYPE_TRANSLATION = {
@@ -31,7 +31,7 @@ TYPE_TRANSLATION = {
     "other": "Інше"
 }
 
-# --- 1. СТВОРЕННЯ ЗАЯВКИ (З ФАЙЛАМИ) ---
+# 1. СТВОРЕННЯ ЗАЯВКИ
 @app.post("/api/submit_claim")
 async def submit_claim(
     type: str = Form(...),
@@ -62,15 +62,12 @@ async def submit_claim(
             "OPENED": "Y"
         }
 
-        # ЛОГІКА ФАЙЛІВ (МЕТОД 2 - Список списків)
         if files:
             file_data_list = []
             for file in files:
                 content = await file.read()
                 b64 = base64.b64encode(content).decode('utf-8')
-                # Бітрікс хоче: [[ім'я, base64], [ім'я2, base64]]
                 file_data_list.append([file.filename, b64])
-            
             bx_fields[FIELDS_MAP["files"]] = file_data_list
 
         payload = {
@@ -90,30 +87,35 @@ async def submit_claim(
         print("Server Error:", str(e))
         raise HTTPException(status_code=500, detail=str(e))
 
-# --- 2. СИНХРОНІЗАЦІЯ СТАТУСІВ ТА ВИДАЛЕННЯ ---
+# 2. СИНХРОНІЗАЦІЯ СТАТУСІВ (ОНОВЛЕННЯ ТА ВИДАЛЕННЯ)
 @app.post("/api/sync_status")
 async def sync_status(data: Dict[str, List[int]] = Body(...)):
+    # Отримуємо список ID з телефону: [1, 2, 3]
     ids = data.get('ids', [])
     if not ids:
         return {"items": []}
 
     try:
+        # Питаємо у Бітрікс про ці ID
         payload = {
             "entityTypeId": SMART_PROCESS_ID,
             "filter": {"@id": ids},
-            "select": ["id", "stageId"]
+            "select": ["id", "stageId"] # Нам потрібен тільки статус
         }
+        
         response = requests.post(f"{BITRIX_WEBHOOK_URL}crm.item.list", json=payload)
         result = response.json()
         
         if "error" in result:
             return {"items": []}
 
+        # Повертаємо тільки ті, що існують. Ті, що видалені в Бітрікс, сюди не потраплять.
         return {"items": result['result']['items']}
+
     except Exception:
         return {"items": []}
 
-# --- 3. ОТРИМАННЯ КОМЕНТАРІВ ---
+# 3. ОТРИМАННЯ КОМЕНТАРІВ
 @app.post("/api/get_comments")
 async def get_comments(data: Dict[str, int] = Body(...)):
     item_id = data.get('id')
@@ -121,14 +123,14 @@ async def get_comments(data: Dict[str, int] = Body(...)):
         return {"comments": []}
 
     try:
-        # Отримуємо коментарі з таймлайну
+        # Отримуємо коментарі з Таймлайну
         payload = {
             "filter": {
                 "ENTITY_ID": item_id,
-                "ENTITY_TYPE": f"dynamic_{SMART_PROCESS_ID}", # dynamic_1038
-                "TYPE_ID": "COMMENT"
+                "ENTITY_TYPE": f"dynamic_{SMART_PROCESS_ID}", # Тип сутності
+                "TYPE_ID": "COMMENT" # Тільки коментарі
             },
-            "order": {"ID": "DESC"}
+            "order": {"ID": "DESC"} # Нові зверху
         }
 
         response = requests.post(f"{BITRIX_WEBHOOK_URL}crm.timeline.comment.list", json=payload)
@@ -142,10 +144,11 @@ async def get_comments(data: Dict[str, int] = Body(...)):
             comments.append({
                 "id": c['ID'],
                 "text": c['COMMENT'],
-                "author": c.get('AUTHOR', {}).get('NAME', 'Менеджер'),
+                "author": c.get('AUTHOR', {}).get('NAME', 'Менеджер'), # Ім'я автора
                 "date": c['CREATED']
             })
 
         return {"comments": comments}
+
     except Exception:
         return {"comments": []}
