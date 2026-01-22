@@ -249,7 +249,7 @@ async def status_update(
                     <h1 style="color: {color}; margin: 20px 0;">{status_text}</h1>
                     <p>Зайдіть у Service Desk, щоб переглянути деталі та офіційну відповідь.</p>
                     <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-                    <a href="https://emet-service.vercel.app/" style="background: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Перейти до заявки</a>
+                    <a href="https://reclamation-app-eight.vercel.app/" style="background: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Перейти до заявки</a>
                 </div>
                 """
                 send_email(manager_mail, f"Оновлення заявки #{id} [{status_text}]", body)
