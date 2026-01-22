@@ -786,16 +786,22 @@
             e.preventDefault();
             const btnT = document.getElementById('btn-text');
             const btnL = document.getElementById('btn-loader');
+            
+            // Показуємо лоадер
             btnT.innerText = 'Відправка...'; 
             btnL.classList.remove('hidden');
 
             const prod = document.getElementById('product').value;
             const type = document.getElementById('claimType').value;
+            
+            // Дані менеджера
             const manager = localStorage.getItem('emet_user') || 'Unknown';
             const email = localStorage.getItem('emet_email') || '';
 
+            // Збираємо деталі (динамічні поля)
             let det = {};
             const medTypes = ['side_effect','complication','effectiveness'];
+            
             if(medTypes.includes(type) && FORMS_CONFIG[prod]) {
                 FORMS_CONFIG[prod].forEach(x => { 
                     const el = document.getElementById('cust_' + x.id); 
@@ -806,6 +812,7 @@
                 if(el?.value) det[type === 'quality' ? 'Опис невідповідності' : 'Опис проблеми'] = el.value; 
             }
 
+            // Формуємо дані для відправки
             const fd = new FormData();
             fd.append('type', type);
             fd.append('client', document.getElementById('client').value);
@@ -816,9 +823,11 @@
             fd.append('manager_email', email);
             fd.append('details', JSON.stringify(det));
             
+            // Додаємо файли
             const files = document.getElementById('dropzone-file').files;
             for(let i=0; i<files.length; i++) fd.append('files', files[i]);
 
+            // Відправляємо на сервер
             fetch('/api/submit_claim', { method: 'POST', body: fd })
             .then(r => { 
                 if(!r.ok) throw new Error('Error'); 
@@ -826,20 +835,19 @@
             })
             .then(d => {
                 alert('✅ Рекламацію успішно створено! ID: ' + d.id);
-                let h = JSON.parse(localStorage.getItem('emet_history')) || [];
-                h.unshift({
-                    id: d.id, 
-                    date: new Date().toLocaleDateString(), 
-                    status: 'new', 
-                    bitrix_stage_id: '', 
-                    type: type, 
-                    client: document.getElementById('client').value, 
-                    product: prod, 
-                    lot: document.getElementById('lot').value,
-                    details: det
-                });
-                localStorage.setItem('emet_history', JSON.stringify(h));
-                location.reload();
+                
+                // 1. Очищуємо форму
+                document.getElementById('claimForm').reset();
+                document.getElementById('preview-area').innerHTML = '';
+                document.getElementById('dynamic-form-area').classList.add('hidden');
+                
+                // 2. Перемикаємось на вкладку історії
+                // (Це спрацює і завантажить нові дані, якщо у вас оновлена функція switchTab)
+                switchTab('history');
+                
+                // 3. Повертаємо кнопку в початковий стан
+                btnT.innerText = 'Відправити рекламацію'; 
+                btnL.classList.add('hidden');
             })
             .catch(e => { 
                 console.error(e); 
