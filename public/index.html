@@ -745,23 +745,23 @@
                 
                 if(x.bitrix_stage_id) {
                     const sid = x.bitrix_stage_id.toUpperCase();
-                    console.log(`Заявка #${x.id} має стадію: ${sid}`); // <-- ДИВІТЬСЯ СЮДИ В КОНСОЛЬ (F12)
-
-                    // Логіка визначення кольору
+                    
+                    // Логіка кольорів для списку
                     if(sid.includes('NEW')) { 
                         stClass = STATUS_CONFIG['new'].class; stText = 'Нова'; 
                     }
-                    // Додав більше варіантів для "Вирішено" (DONE, FINISH, COMPLETE)
-                    else if(sid.includes('SUCCESS') || sid.includes('WON') || sid.includes('DONE') || sid.includes('FINISH') || sid.includes('COMPLETE')) { 
+                    else if(sid.includes('SUCCESS') || sid.includes('WON') || sid.includes('DONE') || sid.includes('COMPLETE')) { 
                         stClass = STATUS_CONFIG['done'].class; stText = 'Вирішено'; 
                     }
                     else if(sid.includes('FAIL') || sid.includes('LOSE') || sid.includes('REJECT')) { 
                         stClass = STATUS_CONFIG['reject'].class; stText = 'Відмова'; 
                     }
                     else { 
+                        // Сюди потраплять PREPARATION, CLIENT і всі інші
                         stClass = STATUS_CONFIG['work'].class; stText = 'В роботі'; 
                     }
                 }
+
                 c.innerHTML += `
                 <div onclick="openModal(${x.id})" class="bg-white p-4 rounded-xl shadow-sm mb-3 border border-gray-100 cursor-pointer active:bg-gray-50 transition">
                     <div class="flex justify-between text-xs text-gray-400 font-bold mb-1">
@@ -773,11 +773,11 @@
                 </div>`;
             });
         }
-
         // --- 7. МОДАЛЬНЕ ВІКНО ТА КОМЕНТАРІ ---
         function openModal(id) {
             const h = JSON.parse(localStorage.getItem('emet_history')) || [];
-            const c = h.find(x => x.id === id);
+            // Тут ми називаємо змінну 'c' (claim)
+            const c = h.find(item => item.id === id);
             if(!c) return;
             
             // Заповнення інфо
@@ -787,28 +787,31 @@
             document.getElementById('m-product').innerText = c.product;
             document.getElementById('m-lot').innerText = c.lot || '';
             
-            // Статус
+            // --- ЛОГІКА СТАТУСІВ (ВИПРАВЛЕНА) ---
             let stClass = STATUS_CONFIG['new'].class;
             let stText = 'Нова';
-            if(x.bitrix_stage_id) {
-                    const sid = x.bitrix_stage_id.toUpperCase();
-                    console.log(`Заявка #${x.id} має стадію: ${sid}`); // <-- ДИВІТЬСЯ СЮДИ В КОНСОЛЬ (F12)
-
-                    // Логіка визначення кольору
-                    if(sid.includes('NEW')) { 
-                        stClass = STATUS_CONFIG['new'].class; stText = 'Нова'; 
-                    }
-                    // Додав більше варіантів для "Вирішено" (DONE, FINISH, COMPLETE)
-                    else if(sid.includes('SUCCESS') || sid.includes('WON') || sid.includes('DONE') || sid.includes('FINISH') || sid.includes('COMPLETE')) { 
-                        stClass = STATUS_CONFIG['done'].class; stText = 'Вирішено'; 
-                    }
-                    else if(sid.includes('FAIL') || sid.includes('LOSE') || sid.includes('REJECT')) { 
-                        stClass = STATUS_CONFIG['reject'].class; stText = 'Відмова'; 
-                    }
-                    else { 
-                        stClass = STATUS_CONFIG['work'].class; stText = 'В роботі'; 
-                    }
+            
+            if(c.bitrix_stage_id) {
+                const sid = c.bitrix_stage_id.toUpperCase();
+                
+                // 1. НОВА
+                if(sid.includes('NEW')) { 
+                    stClass = STATUS_CONFIG['new'].class; stText = 'Нова'; 
                 }
+                // 2. УСПІХ (Фініш)
+                else if(sid.includes('SUCCESS') || sid.includes('WON') || sid.includes('DONE') || sid.includes('COMPLETE')) { 
+                    stClass = STATUS_CONFIG['done'].class; stText = 'Вирішено'; 
+                }
+                // 3. ПРОВАЛ (Відмова)
+                else if(sid.includes('FAIL') || sid.includes('LOSE') || sid.includes('REJECT')) { 
+                    stClass = STATUS_CONFIG['reject'].class; stText = 'Відмова'; 
+                }
+                // 4. В РОБОТІ (Всі інші стадії: PREPARATION, CLIENT, WORK тощо)
+                else { 
+                    stClass = STATUS_CONFIG['work'].class; stText = 'В роботі'; 
+                }
+            }
+            
             const badge = document.getElementById('m-status-badge');
             badge.className = `px-3 py-1 rounded-full text-xs font-bold uppercase ${stClass}`;
             badge.innerText = stText;
