@@ -213,8 +213,8 @@ async def sync_status(data: Dict[str, List[int]] = Body(...)):
 # --- 4. WEBHOOK ВІД БІТРІКС (ЗМІНА СТАТУСУ) ---
 @app.post("/api/webhook/status_update")
 async def status_update(
-    id: int = Form(...),         # ID елемента
-    stage_id: str = Form(...)    # Нова стадія (код)
+    id: int,         # ID елемента
+    stage_id: str    # Нова стадія (код)
 ):
     # Тут ми перевіряємо, чи є стадія фінальною (Успіх або Провал)
     # Перевірте, які коди у ваших фінальних стадій (наприклад: WON, SUCCESS, FAIL, LOSE)
