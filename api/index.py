@@ -75,6 +75,18 @@ async def submit_claim(
                     "fileData": [file.filename, b64]
                 })
             
+            bx_fields[FIELDS_MAP["files"]] = file_data_list# 4. Обробка файлів (ВИПРАВЛЕНО ДЛЯ КОРОБКИ)
+        if files:
+            file_data_list = []
+            for file in files:
+                content = await file.read()
+                b64 = base64.b64encode(content).decode('utf-8')
+                
+                # Для множинного поля типу "Файл" Бітрікс приймає список, 
+                # де кожен елемент - це масив [ім'я, base64]
+                file_data_list.append([file.filename, b64])
+            
+            # Привласнюємо список списків
             bx_fields[FIELDS_MAP["files"]] = file_data_list
 
         # 5. Відправка
