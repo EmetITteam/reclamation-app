@@ -902,37 +902,11 @@
         }
 
         // --- 5. СИНХРОНІЗАЦІЯ СТАТУСІВ (ОНОВЛЕНО ПІД ВАШІ ВИМОГИ) ---
+        // --- ОНОВЛЕНА ФУНКЦІЯ (Просто просить дані у сервера) ---
         function syncHistory() {
-            const h = JSON.parse(localStorage.getItem('emet_history')) || [];
-            if(h.length === 0) return;
-
-            document.getElementById('history-loader').classList.remove('hidden');
-            const ids = h.map(item => parseInt(item.id));
-
-            fetch('/api/sync_status', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ids: ids})
-            })
-            .then(r => r.json())
-            .then(data => {
-                const foundItems = data.items || [];
-                // Фільтрація: залишаємо тільки ті, що повернув Бітрікс (інші видалені)
-                const newHistory = h.filter(localItem => {
-                    const found = foundItems.find(remItem => parseInt(remItem.id) === parseInt(localItem.id));
-                    if (found) {
-                        localItem.bitrix_stage_id = found.stageId; // Оновлюємо стадію
-                        return true; 
-                    }
-                    return false; 
-                });
-
-                localStorage.setItem('emet_history', JSON.stringify(newHistory));
-                renderHistory();
-            })
-            .finally(() => {
-                document.getElementById('history-loader').classList.add('hidden');
-            });
+             const email = localStorage.getItem('emet_email');
+             // Якщо є пошта - вантажимо історію з сервера
+             if(email) loadHistoryFromServer(email);
         }
 
 
@@ -1039,6 +1013,7 @@
         }
         
         // --- 8. НАВІГАЦІЯ ---
+        // --- ОНОВЛЕНА НАВІГАЦІЯ (Не стирає список) ---
         function switchTab(t){
             document.getElementById('tab-new').classList.toggle('hidden', t !== 'new');
             document.getElementById('tab-history').classList.toggle('hidden', t !== 'history');
@@ -1053,8 +1028,9 @@
                 navHist.classList.remove('text-gray-400'); navHist.classList.add('text-blue-600');
                 navNew.classList.remove('text-blue-600'); navNew.classList.add('text-gray-400');
                 
-                renderHistory();
-                syncHistory(); // Авто-оновлення при відкритті
+                // ГОЛОВНА ЗМІНА: Запускаємо завантаження з сервера, а не малюємо порожнє
+                const email = localStorage.getItem('emet_email');
+                if(email) loadHistoryFromServer(email);
             }
         }
         function logoutUser() {
