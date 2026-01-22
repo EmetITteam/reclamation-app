@@ -743,21 +743,23 @@
                 let stClass = STATUS_CONFIG['new'].class;
                 let stText = 'Нова';
                 
-                if(x.bitrix_stage_id) {
-                    const sid = x.bitrix_stage_id.toUpperCase();
+                if(x.bitrix_stage_id) { // або c.bitrix_stage_id в openModal
+                    const sid = (x.bitrix_stage_id || c.bitrix_stage_id).toUpperCase();
                     
-                    // Логіка кольорів для списку
-                    if(sid.includes('NEW')) { 
+                    // 1. НОВА (Тільки NEW)
+                    if(sid.includes(':NEW')) { 
                         stClass = STATUS_CONFIG['new'].class; stText = 'Нова'; 
                     }
+                    // 2. ВИРІШЕНО (Успішні стадії)
                     else if(sid.includes('SUCCESS') || sid.includes('WON') || sid.includes('DONE') || sid.includes('COMPLETE')) { 
                         stClass = STATUS_CONFIG['done'].class; stText = 'Вирішено'; 
                     }
+                    // 3. ВІДМОВА (Провальні стадії)
                     else if(sid.includes('FAIL') || sid.includes('LOSE') || sid.includes('REJECT')) { 
                         stClass = STATUS_CONFIG['reject'].class; stText = 'Відмова'; 
                     }
+                    // 4. В РОБОТІ (PREPARATION, CLIENT та всі інші)
                     else { 
-                        // Сюди потраплять PREPARATION, CLIENT і всі інші
                         stClass = STATUS_CONFIG['work'].class; stText = 'В роботі'; 
                     }
                 }
@@ -791,26 +793,26 @@
             let stClass = STATUS_CONFIG['new'].class;
             let stText = 'Нова';
             
-            if(c.bitrix_stage_id) {
-                const sid = c.bitrix_stage_id.toUpperCase();
-                
-                // 1. НОВА
-                if(sid.includes('NEW')) { 
-                    stClass = STATUS_CONFIG['new'].class; stText = 'Нова'; 
+            if(c.bitrix_stage_id) { // або c.bitrix_stage_id в openModal
+                    const sid = (x.bitrix_stage_id || c.bitrix_stage_id).toUpperCase();
+                    
+                    // 1. НОВА (Тільки NEW)
+                    if(sid.includes(':NEW')) { 
+                        stClass = STATUS_CONFIG['new'].class; stText = 'Нова'; 
+                    }
+                    // 2. ВИРІШЕНО (Успішні стадії)
+                    else if(sid.includes('SUCCESS') || sid.includes('WON') || sid.includes('DONE') || sid.includes('COMPLETE')) { 
+                        stClass = STATUS_CONFIG['done'].class; stText = 'Вирішено'; 
+                    }
+                    // 3. ВІДМОВА (Провальні стадії)
+                    else if(sid.includes('FAIL') || sid.includes('LOSE') || sid.includes('REJECT')) { 
+                        stClass = STATUS_CONFIG['reject'].class; stText = 'Відмова'; 
+                    }
+                    // 4. В РОБОТІ (PREPARATION, CLIENT та всі інші)
+                    else { 
+                        stClass = STATUS_CONFIG['work'].class; stText = 'В роботі'; 
+                    }
                 }
-                // 2. УСПІХ (Фініш)
-                else if(sid.includes('SUCCESS') || sid.includes('WON') || sid.includes('DONE') || sid.includes('COMPLETE')) { 
-                    stClass = STATUS_CONFIG['done'].class; stText = 'Вирішено'; 
-                }
-                // 3. ПРОВАЛ (Відмова)
-                else if(sid.includes('FAIL') || sid.includes('LOSE') || sid.includes('REJECT')) { 
-                    stClass = STATUS_CONFIG['reject'].class; stText = 'Відмова'; 
-                }
-                // 4. В РОБОТІ (Всі інші стадії: PREPARATION, CLIENT, WORK тощо)
-                else { 
-                    stClass = STATUS_CONFIG['work'].class; stText = 'В роботі'; 
-                }
-            }
             
             const badge = document.getElementById('m-status-badge');
             badge.className = `px-3 py-1 rounded-full text-xs font-bold uppercase ${stClass}`;
@@ -896,6 +898,18 @@
                 
                 renderHistory();
                 syncHistory(); // Авто-оновлення при відкритті
+            }
+        }
+        // --- ЗАГУБЛЕНА ФУНКЦІЯ АВТОРИЗАЦІЇ ---
+        function checkAuth() {
+            if (currentUser) {
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('current-user-display').innerText = currentUser;
+                // Завантажуємо історію тільки якщо ми авторизовані
+                renderHistory();
+                syncHistory();
+            } else {
+                document.getElementById('login-screen').classList.remove('hidden');
             }
         }
 
