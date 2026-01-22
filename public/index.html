@@ -743,22 +743,24 @@
                 let stClass = STATUS_CONFIG['new'].class;
                 let stText = 'Нова';
                 
-                if(x.bitrix_stage_id) { // або c.bitrix_stage_id в openModal
-                    const sid = (x.bitrix_stage_id || c.bitrix_stage_id).toUpperCase();
+                if(x.bitrix_stage_id) {
+                    const sid = x.bitrix_stage_id.toUpperCase();
                     
-                    // 1. НОВА (Тільки NEW)
+                    // --- ЛОГІКА СТАТУСІВ (ОНОВЛЕНА ПІД ВАШ БІТРІКС) ---
+                    
+                    // 1. НОВА (DT1038_8:NEW)
                     if(sid.includes(':NEW')) { 
                         stClass = STATUS_CONFIG['new'].class; stText = 'Нова'; 
                     }
-                    // 2. ВИРІШЕНО (Успішні стадії)
+                    // 2. ВИРІШЕНО (Успішні фінальні стадії)
                     else if(sid.includes('SUCCESS') || sid.includes('WON') || sid.includes('DONE') || sid.includes('COMPLETE')) { 
                         stClass = STATUS_CONFIG['done'].class; stText = 'Вирішено'; 
                     }
-                    // 3. ВІДМОВА (Провальні стадії)
+                    // 3. ВІДМОВА (Неуспішні фінальні)
                     else if(sid.includes('FAIL') || sid.includes('LOSE') || sid.includes('REJECT')) { 
                         stClass = STATUS_CONFIG['reject'].class; stText = 'Відмова'; 
                     }
-                    // 4. В РОБОТІ (PREPARATION, CLIENT та всі інші)
+                    // 4. В РОБОТІ (PREPARATION, CLIENT і всі інші)
                     else { 
                         stClass = STATUS_CONFIG['work'].class; stText = 'В роботі'; 
                     }
@@ -778,7 +780,7 @@
         // --- 7. МОДАЛЬНЕ ВІКНО ТА КОМЕНТАРІ ---
         function openModal(id) {
             const h = JSON.parse(localStorage.getItem('emet_history')) || [];
-            // Тут ми називаємо змінну 'c' (claim)
+            // ВИПРАВЛЕНО: Шукаємо елемент і називаємо його 'c'
             const c = h.find(item => item.id === id);
             if(!c) return;
             
@@ -789,30 +791,26 @@
             document.getElementById('m-product').innerText = c.product;
             document.getElementById('m-lot').innerText = c.lot || '';
             
-            // --- ЛОГІКА СТАТУСІВ (ВИПРАВЛЕНА) ---
+            // --- ЛОГІКА СТАТУСІВ ДЛЯ МОДАЛКИ ---
             let stClass = STATUS_CONFIG['new'].class;
             let stText = 'Нова';
             
-            if(c.bitrix_stage_id) { // або c.bitrix_stage_id в openModal
-                    const sid = (x.bitrix_stage_id || c.bitrix_stage_id).toUpperCase();
-                    
-                    // 1. НОВА (Тільки NEW)
-                    if(sid.includes(':NEW')) { 
-                        stClass = STATUS_CONFIG['new'].class; stText = 'Нова'; 
-                    }
-                    // 2. ВИРІШЕНО (Успішні стадії)
-                    else if(sid.includes('SUCCESS') || sid.includes('WON') || sid.includes('DONE') || sid.includes('COMPLETE')) { 
-                        stClass = STATUS_CONFIG['done'].class; stText = 'Вирішено'; 
-                    }
-                    // 3. ВІДМОВА (Провальні стадії)
-                    else if(sid.includes('FAIL') || sid.includes('LOSE') || sid.includes('REJECT')) { 
-                        stClass = STATUS_CONFIG['reject'].class; stText = 'Відмова'; 
-                    }
-                    // 4. В РОБОТІ (PREPARATION, CLIENT та всі інші)
-                    else { 
-                        stClass = STATUS_CONFIG['work'].class; stText = 'В роботі'; 
-                    }
+            if(c.bitrix_stage_id) {
+                const sid = c.bitrix_stage_id.toUpperCase();
+                
+                if(sid.includes(':NEW')) { 
+                    stClass = STATUS_CONFIG['new'].class; stText = 'Нова'; 
                 }
+                else if(sid.includes('SUCCESS') || sid.includes('WON') || sid.includes('DONE') || sid.includes('COMPLETE')) { 
+                    stClass = STATUS_CONFIG['done'].class; stText = 'Вирішено'; 
+                }
+                else if(sid.includes('FAIL') || sid.includes('LOSE') || sid.includes('REJECT')) { 
+                    stClass = STATUS_CONFIG['reject'].class; stText = 'Відмова'; 
+                }
+                else { 
+                    stClass = STATUS_CONFIG['work'].class; stText = 'В роботі'; 
+                }
+            }
             
             const badge = document.getElementById('m-status-badge');
             badge.className = `px-3 py-1 rounded-full text-xs font-bold uppercase ${stClass}`;
