@@ -23,9 +23,24 @@
                 <i class="fa-solid fa-user-doctor text-3xl text-blue-600"></i>
             </div>
             <h2 class="text-2xl font-bold mb-2">Вхід у систему</h2>
-            <p class="text-gray-500 mb-6">Введіть ваше ім'я та прізвище</p>
-            <input type="text" id="login-name" class="w-full border border-gray-300 rounded-lg p-3 mb-4 text-center text-lg" placeholder="Наприклад: Іванова Олена">
-            <button onclick="loginUser()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow hover:bg-blue-700">Увійти</button>
+            <p class="text-gray-500 mb-6 text-sm">Авторизуйтесь як менеджер або увійдіть як лікар</p>
+            
+            <div id="manager-form">
+                <input type="email" id="login-email" class="w-full border border-gray-300 rounded-lg p-3 mb-3 text-center text-lg" placeholder="Email (Логін)">
+                <input type="password" id="login-password" class="w-full border border-gray-300 rounded-lg p-3 mb-4 text-center text-lg" placeholder="Пароль">
+                <button onclick="loginManager()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow hover:bg-blue-700 mb-3" id="btn-login">Увійти</button>
+            </div>
+
+            <div class="relative flex py-2 items-center w-full">
+                <div class="flex-grow border-t border-gray-200"></div>
+                <span class="flex-shrink-0 mx-4 text-gray-400 text-xs uppercase">або</span>
+                <div class="flex-grow border-t border-gray-200"></div>
+            </div>
+
+            <button onclick="loginAsDoctor()" class="w-full bg-white border-2 border-blue-600 text-blue-600 font-bold py-3 rounded-lg shadow-sm hover:bg-blue-50 mt-3">
+                <i class="fa-solid fa-stethoscope mr-2"></i>Я Лікар / Клієнт
+            </button>
+            <p id="login-error" class="text-red-500 text-sm mt-3 hidden"></p>
         </div>
     </div>
 
@@ -202,7 +217,7 @@
     </nav>
 
     <script>
-        // --- 1. ПОВНА, РОЗГОРНУТА КОНФІГУРАЦІЯ АНКЕТ ---
+        // --- 1. ПОВНА, РОЗГОРНУТА КОНФІГУРАЦІЯ АНКЕТ (НІЯКИХ СКОРОЧЕНЬ) ---
         const FORMS_CONFIG = {
             'VITARAN': [
                 {
@@ -576,20 +591,92 @@
 
         // --- 2. АВТОРИЗАЦІЯ ---
         let currentUser = localStorage.getItem('emet_user');
-        if(currentUser) { 
-            document.getElementById('login-screen').classList.add('hidden'); 
-            document.getElementById('current-user-display').innerText = currentUser; 
-            renderHistory(); 
-        } else {
-            document.getElementById('login-screen').classList.remove('hidden');
+        
+        function checkAuth() {
+            // Сценарій А: Перевірка URL параметру (Auto-Login)
+            const urlParams = new URLSearchParams(window.location.search);
+            const authEmail = urlParams.get('auth_email');
+
+            if (authEmail) {
+                // Якщо є параметр, пробуємо авторизуватися через сервер
+                fetch('/api/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ email: authEmail, is_auto: true })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if(data.status === 'success') {
+                        saveUserAndRedirect(data);
+                    } else {
+                        alert("Помилка авто-входу: " + data.message);
+                    }
+                });
+                return; // Чекаємо відповіді
+            }
+
+            // Звичайна перевірка
+            if(currentUser) { 
+                document.getElementById('login-screen').classList.add('hidden'); 
+                document.getElementById('current-user-display').innerText = currentUser; 
+                renderHistory(); 
+                syncHistory();
+            } else {
+                document.getElementById('login-screen').classList.remove('hidden');
+            }
         }
 
-        function loginUser(){ 
-            const n = document.getElementById('login-name').value; 
-            if(n){
-                localStorage.setItem('emet_user', n); 
-                location.reload();
-            } 
+        // Вхід через форму (Сценарій Б)
+        function loginManager(){ 
+            const email = document.getElementById('login-email').value; 
+            const pass = document.getElementById('login-password').value;
+            const btn = document.getElementById('btn-login');
+            const err = document.getElementById('login-error');
+
+            if(!email || !pass) {
+                err.innerText = "Введіть Email та Пароль";
+                err.classList.remove('hidden');
+                return;
+            }
+
+            btn.innerText = "Перевірка...";
+            err.classList.add('hidden');
+
+            fetch('/api/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ email: email, password: pass })
+            })
+            .then(r => r.json())
+            .then(data => {
+                btn.innerText = "Увійти";
+                if(data.status === 'success') {
+                    saveUserAndRedirect(data);
+                } else {
+                    err.innerText = data.message;
+                    err.classList.remove('hidden');
+                }
+            })
+            .catch(() => {
+                btn.innerText = "Увійти";
+                err.innerText = "Помилка сервера";
+                err.classList.remove('hidden');
+            });
+        }
+
+        // Вхід Лікаря (Сценарій В)
+        function loginAsDoctor() {
+            localStorage.setItem('emet_user', 'Лікар (Гість)');
+            localStorage.setItem('emet_email', ''); // У лікаря немає службової пошти
+            location.reload();
+        }
+
+        function saveUserAndRedirect(data) {
+            localStorage.setItem('emet_user', data.name);
+            localStorage.setItem('emet_email', data.email);
+            // Очищуємо URL від параметрів, щоб було красиво
+            window.history.replaceState({}, document.title, "/");
+            location.reload();
         }
 
         // --- 3. ДИНАМІЧНА ФОРМА ---
@@ -641,9 +728,10 @@
             const prod = document.getElementById('product').value;
             const type = document.getElementById('claimType').value;
             const manager = localStorage.getItem('emet_user') || 'Unknown';
-            const medTypes = ['side_effect','complication','effectiveness'];
-            
+            const email = localStorage.getItem('emet_email') || '';
+
             let det = {};
+            const medTypes = ['side_effect','complication','effectiveness'];
             if(medTypes.includes(type) && FORMS_CONFIG[prod]) {
                 FORMS_CONFIG[prod].forEach(x => { 
                     const el = document.getElementById('cust_' + x.id); 
@@ -661,6 +749,7 @@
             fd.append('lot', document.getElementById('lot').value);
             fd.append('invoice', document.getElementById('invoice').value);
             fd.append('manager', manager);
+            fd.append('manager_email', email);
             fd.append('details', JSON.stringify(det));
             
             const files = document.getElementById('dropzone-file').files;
@@ -696,7 +785,7 @@
             });
         }
 
-        // --- 5. СИНХРОНІЗАЦІЯ СТАТУСІВ ---
+        // --- 5. СИНХРОНІЗАЦІЯ СТАТУСІВ (ОНОВЛЕНО ПІД ВАШІ ВИМОГИ) ---
         function syncHistory() {
             const h = JSON.parse(localStorage.getItem('emet_history')) || [];
             if(h.length === 0) return;
@@ -751,7 +840,7 @@
                     if(sid.includes(':NEW')) { 
                         stClass = STATUS_CONFIG['new'].class; stText = 'Нова'; 
                     }
-                    // 2. КОЛОНКА "ВИКОНАНО" (CLIENT - це фінальна стадія у вас)
+                    // 2. КОЛОНКА "ВИКОНАНО" (CLIENT + фінальні)
                     else if(sid.includes(':CLIENT') || sid.includes('SUCCESS') || sid.includes('WON')) { 
                         stClass = STATUS_CONFIG['done'].class; stText = 'Вирішено'; 
                     }
@@ -776,6 +865,7 @@
                 </div>`;
             });
         }
+
         // --- 7. МОДАЛЬНЕ ВІКНО (ВИПРАВЛЕНО ВІДКРИТТЯ І СТАТУСИ) ---
         function openModal(id) {
             const h = JSON.parse(localStorage.getItem('emet_history')) || [];
@@ -895,18 +985,6 @@
                 
                 renderHistory();
                 syncHistory(); // Авто-оновлення при відкритті
-            }
-        }
-        // --- ЗАГУБЛЕНА ФУНКЦІЯ АВТОРИЗАЦІЇ ---
-        function checkAuth() {
-            if (currentUser) {
-                document.getElementById('login-screen').classList.add('hidden');
-                document.getElementById('current-user-display').innerText = currentUser;
-                // Завантажуємо історію тільки якщо ми авторизовані
-                renderHistory();
-                syncHistory();
-            } else {
-                document.getElementById('login-screen').classList.remove('hidden');
             }
         }
 
