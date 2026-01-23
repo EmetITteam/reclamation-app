@@ -325,30 +325,64 @@ class CommentModel(BaseModel):
     message: str
     author: str
 
+# --- ДОДАЙТЕ ЦЕЙ РЯДОК ПЕРЕД ФУНКЦІЄЮ (для кешування імен) ---
+USER_NAME_CACHE = {}
+
+# --- ОНОВЛЕНА ФУНКЦІЯ (запитує імена у Бітрікс) ---
 @app.post("/api/get_comments")
 async def get_comments(data: Dict[str, int] = Body(...)):
     item_id = data.get('id')
+    
+    # Отримуємо коментарі
     r = requests.post(f"{BITRIX_WEBHOOK_URL}crm.timeline.comment.list", json={
         "filter": {"ENTITY_ID": item_id, "ENTITY_TYPE": f"dynamic_{CLAIMS_SPA_ID}", "TYPE_ID": "COMMENT"},
         "order": {"ID": "DESC"}
     })
-    comments = []
-    for c in r.json().get('result', []):
-        author_id = c.get('AUTHOR_ID')
-        comments.append({"id": c['ID'], "text": c['COMMENT'], "author": f"Користувач {author_id}", "date": c['CREATED']})
-    return {"comments": comments}
-
-@app.post("/api/add_comment")
-async def add_comment(data: CommentModel):
-    formatted_message = f"👨‍💻 <b>{data.author}</b> (Менеджер):<br>{data.message}"
-    requests.post(f"{BITRIX_WEBHOOK_URL}crm.timeline.comment.add", json={
-        "fields": {"ENTITY_ID": data.id, "ENTITY_TYPE": f"dynamic_{CLAIMS_SPA_ID}", "COMMENT": formatted_message}
-    })
     
-    for uid in MED_DEPT_USER_IDS:
-        send_bitrix_notification(uid, f"💬 Новий коментар у заявці #{data.id} від менеджера.")
+    comments = []
+    items = r.json().get('result', [])
+    
+    for c in items:
+        author_id = c.get('AUTHOR_ID')
+        author_name = f"Користувач {author_id}" # Запасний варіант
         
-    return {"status": "ok"}
+        # ВАРІАНТ 1: Коментар від Менеджера (через наш додаток/телеграм)
+        # У них AUTHOR_ID зазвичай 0 або None, а ім'я сховане в тексті <b>Name</b>
+        if not author_id or str(author_id) == '0':
+             match = re.search(r"<b>(.*?)</b>", c.get('COMMENT', ''))
+             if match:
+                 author_name = match.group(1)
+             else:
+                 author_name = "Менеджер"
+        
+        # ВАРІАНТ 2: Коментар від співробітника Бітрікс (Лікар, Адмін)
+        # У них є реальний ID (наприклад 2049)
+        elif author_id:
+            # Якщо ім'я вже є в кеші - беремо звідти (щоб не гальмувати)
+            if author_id in USER_NAME_CACHE:
+                author_name = USER_NAME_CACHE[author_id]
+            else:
+                # Якщо немає - робимо запит до Бітрікс
+                try:
+                    u_req = requests.post(f"{BITRIX_WEBHOOK_URL}user.get", json={"ID": author_id})
+                    users = u_req.json().get('result', [])
+                    if users:
+                        user = users[0]
+                        full_name = f"{user.get('NAME', '')} {user.get('LAST_NAME', '')}".strip()
+                        if full_name:
+                            author_name = full_name
+                            USER_NAME_CACHE[author_id] = author_name # Запам'ятовуємо
+                except:
+                    pass
+        
+        comments.append({
+            "id": c['ID'], 
+            "text": c['COMMENT'], 
+            "author": author_name, 
+            "date": c['CREATED']
+        })
+        
+    return {"comments": comments}
 
 # --- 🔄 СТАТУСИ (WEBHOOK ВІД БІТРІКС) ---
 @app.post("/api/webhook/status_update")
