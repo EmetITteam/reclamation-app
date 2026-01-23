@@ -15,7 +15,7 @@ BITRIX_WEBHOOK_URL = "https://bitrix.emet.in.ua/rest/2049/24pv36uotghswqwa/"
 SMART_PROCESS_ID = 1038
 
 # --- НАЛАШТУВАННЯ СПОВІЩЕНЬ ---
-TG_BOT_TOKEN = "ВАШ_ТОКЕН_БОТА"  # Отримайте у @BotFather
+TG_BOT_TOKEN = "8544009962:AAGTYNRWkQ2lKONLnv8Z-3NUFCBVcq-qC7A"  # Отримайте у @BotFather
 TG_CHAT_ID = "ВАШ_CHAT_ID"       # ID чату/групи куди падатимуть заявки
 
 SMTP_SERVER = "smtp.gmail.com"
