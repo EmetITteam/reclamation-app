@@ -119,6 +119,7 @@ def send_bitrix_notification(user_id, message):
         pass
 
 # --- 🤖 TELEGRAM WEBHOOK (АВТОРИЗАЦІЯ + ВІДПОВІДІ) ---
+# --- 🤖 TELEGRAM WEBHOOK (З ПОСИЛАННЯМ ДЛЯ МЕД. ВІДДІЛУ) ---
 @app.post("/api/telegram_webhook")
 async def telegram_webhook(request: Request):
     try:
@@ -168,15 +169,20 @@ async def telegram_webhook(request: Request):
                 # Додаємо коментар у заявку
                 requests.post(f"{BITRIX_WEBHOOK_URL}crm.timeline.comment.add", json={
                     "fields": {
-                        "ENTITY_ID": claim_id,
+                        "ENTITY_ID": claim_id, 
                         "ENTITY_TYPE": f"dynamic_{CLAIMS_SPA_ID}", 
                         "COMMENT": formatted_message
                     }
                 })
                 
-                # Сповіщаємо мед. відділ у "Дзвіночок" про нову відповідь
+                # 👇 ФОРМУЄМО ПОСИЛАННЯ ДЛЯ БІТРІКС
+                link_to_crm = f"https://bitrix.emet.in.ua/crm/type/{CLAIMS_SPA_ID}/details/{claim_id}/"
+                
+                # 👇 Сповіщаємо мед. відділ у "Дзвіночок" З ПОСИЛАННЯМ [URL]
+                notify_msg = f"💬 Нова відповідь менеджера по заявці [URL={link_to_crm}]#{claim_id}[/URL]: {text}"
+                
                 for uid in MED_DEPT_USER_IDS:
-                    send_bitrix_notification(uid, f"💬 Нова відповідь менеджера по заявці #{claim_id}: {text}")
+                    send_bitrix_notification(uid, notify_msg)
 
                 send_telegram(chat_id, "✅ Коментар додано!")
                 return {"status": "ok"}
