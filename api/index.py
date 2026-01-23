@@ -273,7 +273,7 @@ async def get_history(email: str = Form(...)):
         # Питаємо Бітрікс
         payload = {
             "entityTypeId": SMART_PROCESS_ID,
-            "filter": { FIELD_MANAGER_EMAIL: email }, 
+            "filter": { FIELD_MANAGER_EMAIL_IN_CLAIM: email }, 
             "select": ["id", "title", "stageId", "createdTime"],
             "order": { "id": "DESC" }
         }
@@ -450,7 +450,7 @@ async def status_update(
             
             if "result" in item_data:
                 item = item_data['result']['item']
-                manager_mail = item.get(FIELD_MANAGER_EMAIL)
+                manager_mail = item.get(FIELD_MANAGER_EMAIL_IN_CLAIM)
                 client_name = item.get("title", "Без назви")
                 
                 # --- СЦЕНАРІЙ 1: НОВА ЗАЯВКА -> МЕД. ВІДДІЛ ---
