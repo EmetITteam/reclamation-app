@@ -53,8 +53,10 @@ TYPE_TRANSLATION = {
 }
 
 # Telegram & Email
-TG_BOT_TOKEN = "ВАШ_ТОКЕН_БОТА" 
-TG_ADMIN_CHAT_ID = "ВАШ_ОСОБИСТИЙ_ID" 
+# --- БЕЗПЕКА (Беремо ключі з налаштувань Vercel) ---
+# Якщо змінних немає в Vercel, код не впаде, але телеграм не працюватиме
+TG_BOT_TOKEN = os.environ.get("TG_BOT_TOKEN", "") 
+TG_ADMIN_CHAT_ID = os.environ.get("TG_ADMIN_CHAT_ID", "")
 
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
