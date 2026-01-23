@@ -483,7 +483,7 @@ async def status_update(id: str, stage_id: str):
         return {"status": "ok", "error": str(e)}
 
 # --- 📨 ВЕБХУК ПОДІЙ (КОМЕНТАРІ З БІТРІКС -> ТЕЛЕГРАМ) ---
-# --- 📨 ВЕБХУК (РЕЖИМ ДИАГНОСТИКИ) ---
+# --- 📨 ВЕБХУК (ПОКРАЩЕНИЙ: САМ ЗНАХОДИТЬ ID ЗАЯВКИ) ---
 @app.post("/api/webhook/bitrix_event")
 async def bitrix_event(request: Request):
     try:
@@ -491,73 +491,70 @@ async def bitrix_event(request: Request):
         fields = dict(form)
         event = fields.get('event')
         
-        print(f"🔍 WEBHOOK RECEIVED: {event}") # Лог 1
-        
+        # Нас цікавлять тільки коментарі
         if event == 'ONCRMTIMELINECOMMENTADD':
             comment_id = fields.get('data[FIELDS][ID]')
-            entity_id = fields.get('data[FIELDS][ENTITY_ID]')
-            entity_type = fields.get('data[FIELDS][ENTITY_TYPE]') # text like 'dynamic_1038'
-            
-            print(f"   -> Data: CommentID={comment_id}, EntityID={entity_id}, Type={entity_type}") # Лог 2
+            print(f"🔍 WEBHOOK COMMENT: ID={comment_id}")
 
-            if not comment_id or not entity_id: 
-                print("   -> ❌ Missing ID or EntityID")
-                return {"status": "ignored"}
+            if not comment_id: return {"status": "ignored"}
 
-            # 1. Читаем текст комментария
+            # 1. ЗАПИТУЄМО ДЕТАЛІ У БІТРІКС
+            # (Замість того, щоб шукати ID заявки у вебхуку, ми беремо його прямо з бази)
             r_com = requests.post(f"{BITRIX_WEBHOOK_URL}crm.timeline.comment.get", json={"id": comment_id})
             comment_res = r_com.json()
             comment_data = comment_res.get('result', {})
             
             if not comment_data:
-                print(f"   -> ❌ Comment not found in Bitrix API. Resp: {comment_res}")
+                print(f"   -> ❌ Comment {comment_id} details not found via API")
                 return {"status": "error"}
-                
+
+            # Ось тут ми дізнаємося, до якої заявки цей коментар
+            entity_id = comment_data.get('ENTITY_ID') 
             comment_text = comment_data.get('COMMENT', '')
             author_id = comment_data.get('AUTHOR_ID')
-            print(f"   -> Text: {comment_text[:20]}... | Author: {author_id}") # Лог 3
+            
+            print(f"   -> API Retrieved: Claim #{entity_id}, Text: {comment_text[:20]}...")
 
-            # Фильтр "Эхо"
+            # Фільтр "Ехо" (ігноруємо власні повідомлення з Телеграма/Додатка)
             if "📱" in comment_text or "👨‍💻" in comment_text or "URL=" in comment_text:
                 print(f"   -> 🚫 Ignored ECHO (system message)")
                 return {"status": "ignored"}
 
-            # 2. Ищем заявку в нашем Смарт-процессе
+            # 2. ШУКАЄМО ЗАЯВКУ ТА МЕНЕДЖЕРА
+            # Важливо: перевіряємо, чи це точно Рекламація (SPA), а не щось інше
             r_item = requests.post(f"{BITRIX_WEBHOOK_URL}crm.item.get", json={"entityTypeId": CLAIMS_SPA_ID, "id": entity_id})
-            item_res = r_item.json()
-            item = item_res.get('result', {}).get('item', {})
+            item = r_item.json().get('result', {}).get('item', {})
             
             if not item:
-                print(f"   -> ❌ Item #{entity_id} NOT FOUND in SPA {CLAIMS_SPA_ID}. Is it another entity?")
-                # Возможно, комментарий пришел к Лиду или Сделке, а не к Рекламации
+                # Якщо заявка не знайдена в рекламаціях, значить коментар був до угоди/ліда
+                print(f"   -> ❌ Entity #{entity_id} is NOT a valid Claim (SPA {CLAIMS_SPA_ID})")
                 return {"status": "ignored"}
             
             manager_mail = item.get(FIELD_MANAGER_EMAIL_IN_CLAIM)
-            print(f"   -> Item Found! Manager Email: {manager_mail}") # Лог 4
+            claim_title = item.get("title", f"Заявка #{entity_id}")
 
-            # 3. Отправляем в ТГ
+            # 3. ВІДПРАВЛЯЄМО В ТЕЛЕГРАМ
             if manager_mail:
                 mgr = find_manager_by_email(manager_mail)
                 if mgr and mgr.get(MGR_FIELD_TG_ID):
-                    print(f"   -> Sending TG to ID: {mgr[MGR_FIELD_TG_ID]}") # Лог 5
                     
-                    # Получаем имя автора
-                    author_name = "Колега"
+                    # Шукаємо ім'я автора
+                    author_name = "Медичний відділ"
                     try:
                         u_req = requests.post(f"{BITRIX_WEBHOOK_URL}user.get", json={"ID": author_id})
                         users = u_req.json().get('result', [])
                         if users: author_name = f"{users[0]['NAME']} {users[0]['LAST_NAME']}"
                     except: pass
                     
-                    claim_title = item.get("title", f"Заявка #{entity_id}")
                     msg = f"💬 <b>Новий коментар!</b>\n{claim_title}\n\n👤 <b>{author_name}:</b>\n{comment_text}\n\n<i>Ви можете відповісти на це повідомлення</i>"
                     send_telegram(mgr[MGR_FIELD_TG_ID], msg)
+                    print(f"   -> ✅ SENT TG to {mgr[MGR_FIELD_TG_ID]}")
                 else:
-                    print("   -> ❌ Manager found via Email, but no TG_ID connected.")
+                    print(f"   -> ⚠️ Manager {manager_mail} has no TG connected")
             else:
-                print("   -> ❌ Claim has NO manager email.")
+                print("   -> ⚠️ No manager email in claim")
 
         return {"status": "ok"}
     except Exception as e:
-        print(f"❌ CRITICAL ERROR: {e}")
+        print(f"❌ ERROR: {e}")
         return {"status": "error"}
