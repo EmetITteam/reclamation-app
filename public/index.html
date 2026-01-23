@@ -641,14 +641,72 @@
 
         // --- 6. МОДАЛЬНЕ ВІКНО І ЧАТ (ВІДПРАВКА КОМЕНТАРЯ) ---
         
-        function openModal(id) {
+        // --- 6. МОДАЛЬНЕ ВІКНО ---
+        async function openModal(id) {
+            // 1. Відкриваємо вікно і ставимо "Завантаження..."
+            document.getElementById('details-modal').classList.remove('hidden');
+            
             document.getElementById('m-id').innerText = `#${id}`;
             document.getElementById('m-type').innerText = 'Завантаження...';
-            document.getElementById('m-client').innerText = '';
-            document.getElementById('m-product').innerText = '';
-            document.getElementById('m-lot').innerText = '';
-            document.getElementById('m-dynamic-details').classList.add('hidden'); 
+            document.getElementById('m-client').innerText = '...';
+            document.getElementById('m-product').innerText = '...';
+            document.getElementById('m-lot').innerText = '...';
+            document.getElementById('m-status-badge').innerText = '...';
+            document.getElementById('m-status-badge').className = 'px-3 py-1 rounded-full text-xs font-bold uppercase bg-gray-200 text-gray-500';
+            
+            // Очищаємо старі деталі
+            const dynamicContent = document.getElementById('m-dynamic-content');
+            dynamicContent.innerHTML = ''; 
+            document.getElementById('m-dynamic-details').classList.add('hidden');
 
+            // 2. Паралельно вантажимо: ДЕТАЛІ + КОМЕНТАРІ
+            const detailsPromise = fetch('/api/get_claim_details', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({id: parseInt(id)})
+            }).then(r => r.json());
+
+            const commentsPromise = fetch('/api/get_comments', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({id: parseInt(id)})
+            }).then(r => r.json());
+
+            // --- ОБРОБКА ДЕТАЛЕЙ ЗАЯВКИ ---
+            try {
+                const detailsData = await detailsPromise;
+                
+                if (detailsData.status === 'ok') {
+                    const d = detailsData.data;
+                    document.getElementById('m-type').innerText = 'Рекламація'; // Або тип, якщо він є окремим полем
+                    document.getElementById('m-client').innerText = d.client || 'Не вказано';
+                    document.getElementById('m-product').innerText = d.product || 'Не вказано';
+                    document.getElementById('m-lot').innerText = d.lot ? `(LOT: ${d.lot})` : '';
+                    
+                    // Статус
+                    const badge = document.getElementById('m-status-badge');
+                    badge.innerText = d.status_text;
+                    if(d.status_text === 'Вирішено') badge.className = 'px-3 py-1 rounded-full text-xs font-bold uppercase bg-green-100 text-green-700';
+                    else if(d.status_text === 'Відмовлено') badge.className = 'px-3 py-1 rounded-full text-xs font-bold uppercase bg-red-100 text-red-700';
+                    else if(d.status_text === 'Нова') badge.className = 'px-3 py-1 rounded-full text-xs font-bold uppercase bg-blue-100 text-blue-700';
+                    else badge.className = 'px-3 py-1 rounded-full text-xs font-bold uppercase bg-yellow-100 text-yellow-700';
+
+                    // Анкета (парсимо текст)
+                    if (d.details) {
+                        document.getElementById('m-dynamic-details').classList.remove('hidden');
+                        // Перетворюємо текстові переноси в HTML <br> і робимо жирним питання
+                        let formattedHTML = d.details.replace(/\n/g, '<br>');
+                        // Спроба виділити питання (якщо вони закінчуються двокрапкою або знаком питання)
+                        // Це простий форматер, можна покращити
+                        dynamicContent.innerHTML = formattedHTML;
+                    }
+                }
+            } catch (e) {
+                console.error("Error loading details", e);
+                document.getElementById('m-type').innerText = 'Помилка завантаження';
+            }
+
+            // --- ОБРОБКА КОМЕНТАРІВ (ЧАТ) ---
             const commList = document.getElementById('m-comments-list');
             const commLoad = document.getElementById('m-comments-loader');
             const noComm = document.getElementById('m-no-comments');
@@ -657,25 +715,24 @@
             commLoad.classList.remove('hidden');
             noComm.classList.add('hidden');
 
-            fetch('/api/get_comments', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({id: parseInt(id)})
-            })
-            .then(r => r.json())
-            .then(data => {
-                const comments = data.comments || [];
+            try {
+                const commentsData = await commentsPromise;
+                const comments = commentsData.comments || [];
                 commLoad.classList.add('hidden');
-                
-                if(comments.length === 0) {
+
+                if (comments.length === 0) {
                     noComm.classList.remove('hidden');
                 } else {
                     comments.forEach(com => {
                         const d = new Date(com.date);
                         const dateStr = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                         
+                        // Перевіряємо, чи це коментар менеджера (щоб пофарбувати інакше, наприклад)
+                        const isMe = com.author.includes('Менеджер') || com.author.includes(localStorage.getItem('emet_user'));
+                        const bgClass = isMe ? 'bg-blue-50 border-blue-100' : 'bg-gray-100 border-gray-200';
+
                         commList.innerHTML += `
-                        <div class="bg-gray-100 p-3 rounded-lg text-sm border border-gray-200">
+                        <div class="${bgClass} p-3 rounded-lg text-sm border mb-2">
                             <div class="flex justify-between font-bold text-gray-500 mb-1 text-xs uppercase">
                                 <span class="flex items-center"><i class="fa-solid fa-user mr-1 text-blue-400"></i>${com.author}</span>
                                 <span>${dateStr}</span>
@@ -683,13 +740,12 @@
                             <div class="text-gray-800 leading-relaxed">${com.text}</div>
                         </div>`;
                     });
+                    // Прокрутка вниз до останнього коментаря
+                    commList.scrollTop = commList.scrollHeight;
                 }
-            })
-            .catch(() => {
+            } catch (e) {
                 commLoad.classList.add('hidden');
-            });
-
-            document.getElementById('details-modal').classList.remove('hidden');
+            }
         }
         
         function closeModal(){ 
