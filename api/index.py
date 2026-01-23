@@ -10,52 +10,60 @@ from pydantic import BaseModel  # <--- ОСЬ ЦЬОГО НЕ ВИСТАЧАЛО
 
 app = FastAPI()
 
-# --- ВАШІ НАЛАШТУВАННЯ ---
+# --- ⚙️ НАЛАШТУВАННЯ ---
 BITRIX_WEBHOOK_URL = "https://bitrix.emet.in.ua/rest/2049/24pv36uotghswqwa/"
-SMART_PROCESS_ID = 1038
 
-# --- НАЛАШТУВАННЯ СПОВІЩЕНЬ ---
-TG_BOT_TOKEN = "8544009962:AAGTYNRWkQ2lKONLnv8Z-3NUFCBVcq-qC7A"  # Отримайте у @BotFather
-TG_CHAT_ID = "ВАШ_CHAT_ID"       # ID чату/групи куди падатимуть заявки
+# ID Смарт-процесів
+CLAIMS_SPA_ID = 1038       # Рекламації
+MANAGERS_SPA_ID = 1042     # Менеджери
+
+# Кому дзвонити в "Дзвіночок" (ID співробітників мед. відділу через кому)
+# Наприклад: [2049, 15, 34]
+MED_DEPT_USER_IDS = [2049] 
+
+# Поля МЕНЕДЖЕРІВ (Ваші коди з Бітрікс)
+MGR_FIELD_EMAIL = "ufCrm5_1769158424"
+MGR_FIELD_PASS  = "ufCrm5_1769158448"
+MGR_FIELD_TG_ID = "ufCrm5_1769158458"
+
+# Поле в РЕКЛАМАЦІЇ, куди пишемо email менеджера
+FIELD_MANAGER_EMAIL_IN_CLAIM = "ufCrm4_1769084999"
+
+# Telegram & Email
+TG_BOT_TOKEN = "ВАШ_ТОКЕН_БОТА" 
+TG_ADMIN_CHAT_ID = "ВАШ_ОСОБИСТИЙ_ID" 
 
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
-SMTP_USER = "noreply@emet.in.ua"      # З якої пошти відправляти
-SMTP_PASS = "cgme lnuf pytd widr" # Пароль додатка (App Password), не від скриньки!
+SMTP_USER = "noreply@emet.in.ua"
+SMTP_PASS = "cgme lnuf pytd widr"
 
-# Вставте сюди код поля, який ви створили у Кроці 1
-FIELD_MANAGER_EMAIL = "ufCrm4_1769084999"
+# --- 🛠 ДОПОМІЖНА ФУНКЦІЯ (ПОШУК МЕНЕДЖЕРА В БІТРІКС) ---
+# Цю функцію додайте перед FIELDS_MAP або після imports
+def find_manager_by_email(email):
+    try:
+        r = requests.post(f"{BITRIX_WEBHOOK_URL}crm.item.list", json={
+            "entityTypeId": MANAGERS_SPA_ID,
+            "filter": { MGR_FIELD_EMAIL: email },
+            "select": ["id", "title", MGR_FIELD_EMAIL, MGR_FIELD_PASS, MGR_FIELD_TG_ID]
+        })
+        data = r.json()
+        if "result" in data and data["result"]["items"]:
+            return data["result"]["items"][0]
+    except Exception as e:
+        print(f"Error finding manager: {e}")
+    return None
 
-# --- БАЗА ДАНИХ МЕНЕДЖЕРІВ ---
-MANAGERS_DB = {
-    # ТЕСТОВИЙ АКАУНТ
-    "itd@emet.in.ua": {"pass": "123", "name": "Евгения Малькова", "phone": "380634457827"},
-    # ІНШІ МЕНЕДЖЕРИ
-    "sm.kiev4@emet.in.ua": {"pass": "CrmEmet83a", "name": "Бойко Ольга", "phone": "380979590833"},
-    "ssm.kharkov1@emet.in.ua": {"pass": "CrmEmet19f", "name": "Золотченко Олена", "phone": "380675228279"},
-    "sm.odessa2@emet.in.ua": {"pass": "CrmEmet47z", "name": "Каратеева Олена", "phone": "380676360299"},
-    "sm.kherson1@emet.in.ua": {"pass": "CrmEmet92k", "name": "Клименко Марина", "phone": "380673350210"},
-    "sm.odessa@emet.in.ua": {"pass": "CrmEmet31p", "name": "Крыжняя Карина", "phone": "380675206991"},
-    "sm.kiev@emet.in.ua": {"pass": "CrmEmet68d", "name": "Мигашко Анна", "phone": "380676428988"},
-    "rm.odessa@emet.in.ua": {"pass": "CrmEmet75q", "name": "Пашковская Юлия", "phone": "380679216305"},
-    "sm.odessa1@emet.in.ua": {"pass": "CrmEmet24h", "name": "Пушкарская Виктория", "phone": "380980797797"},
-    "sm.kiev3@emet.in.ua": {"pass": "CrmEmet50w", "name": "Селиванова Виктория", "phone": "380676523343"},
-    "sm.kharkov2@emet.in.ua": {"pass": "CrmEmet88c", "name": "Тесленко Мария", "phone": "380981812070"},
-    "sm.kiev6@emet.in.ua": {"pass": "CrmEmet13j", "name": "Ткаченко Юлия", "phone": "380673320440"},
-    "sm.vinnitsa@emet.in.ua": {"pass": "CrmEmet62t", "name": "Фиголь / Претолюк Илона", "phone": "380671967707"},
-    "sm.dnepr2@emet.in.ua": {"pass": "CrmEmet53g", "name": "Сирик Людмила", "phone": "380678800286"},
-    "sm.kiev8@emet.in.ua": {"pass": "CrmEmet70y", "name": "Некова Катерина", "phone": "380671100901"},
-    "sm.zhytomyr2@emet.in.ua": {"pass": "CrmEmet16m", "name": "Войналович Алёна", "phone": "380677875549"},
-    "sm.zp@emet.in.ua": {"pass": "CrmEmet41v", "name": "Бакумова Алина", "phone": "380675660356"},
-    "rm.zp@emet.in.ua": {"pass": "CrmEmet89e", "name": "Андрющенко Юлия", "phone": "380675707868"},
-    "sm.dnepr3@emet.in.ua": {"pass": "CrmEmet36n", "name": "Фещенко Анна", "phone": "380675228219"},
-    # Ті, для кого не було контактів у другому списку (Додайте імена вручну при потребі):
-    "sm.odessa3@emet.in.ua": {"pass": "CrmEmet22s", "name": "Латій", "phone": ""},
-    "sm.dnepr4@emet.in.ua": {"pass": "CrmEmet57x", "name": "Эмцева", "phone": ""},
-    "sm.nikolaev@emet.in.ua": {"pass": "CrmEmet91c", "name": "Верланова", "phone": ""},
-    "sm.zp2@emet.in.ua": {"pass": "CrmEmet25b", "name": "Шевченко", "phone": ""},
-    "sm.vinnitsa2@emet.in.ua": {"pass": "CrmEmet33w", "name": "Рабищук", "phone": ""}
-}
+# Функція для "Дзвіночка"
+def send_bitrix_notification(user_id, message):
+    try:
+        requests.post(f"{BITRIX_WEBHOOK_URL}im.notify", json={
+            "to": user_id,
+            "message": message,
+            "type": "SYSTEM"
+        })
+    except:
+        pass
 
 # --- ПРАВИЛЬНІ КОДИ ПОЛІВ ---
 FIELDS_MAP = {
@@ -104,98 +112,92 @@ def send_email(to_email, subject, body):
     except Exception as e:
         print(f"Email Error: {e}")
 
-# --- 0. АВТОРИЗАЦІЯ ---
+# --- 🔐 ЛОГІН (ЧЕРЕЗ БІТРІКС) ---
 @app.post("/api/login")
 async def login(data: Dict[str, str] = Body(...)):
     email = data.get("email", "").strip()
     password = data.get("password", "").strip()
-    is_auto = data.get("is_auto", False) # Якщо вхід по посиланню
+    is_auto = data.get("is_auto", False)
 
-    if not email:
-        return {"status": "error", "message": "Email не вказано"}
+    if not email: return {"status": "error", "message": "Email не вказано"}
 
-    user_data = MANAGERS_DB.get(email)
+    # 1. Шукаємо менеджера в базі Бітрікс
+    manager = find_manager_by_email(email)
 
-    if not user_data:
+    if not manager:
         return {"status": "error", "message": "Користувача не знайдено"}
 
-    # Якщо вхід не автоматичний (по посиланню), перевіряємо пароль
-    if not is_auto and user_data["pass"] != password:
+    # 2. Перевіряємо пароль (з поля Бітрікс)
+    stored_pass = manager.get(MGR_FIELD_PASS)
+    
+    # Якщо це не авто-вхід, звіряємо пароль
+    if not is_auto and str(stored_pass) != str(password):
         return {"status": "error", "message": "Невірний пароль"}
 
     return {
         "status": "success",
-        "name": user_data["name"],
+        "name": manager["title"], # Ім'я з картки
         "email": email,
-        "phone": user_data["phone"]
+        "phone": "" 
     }
 
-# --- 1. СТВОРЕННЯ ЗАЯВКИ ---
+# --- 📝 СТВОРЕННЯ ЗАЯВКИ (+ ДЗВІНОЧОК) ---
 @app.post("/api/submit_claim")
 async def submit_claim(
-    type: str = Form(...),
-    client: str = Form(...),
-    product: str = Form(...),
-    lot: str = Form(...),
-    manager: str = Form(...),
-    manager_email: Optional[str] = Form(None), # Отримуємо Email менеджера
-    invoice: Optional[str] = Form(None),
-    details: str = Form(...),
-    files: List[UploadFile] = File(None)
+    type: str = Form(...), client: str = Form(...), product: str = Form(...), 
+    lot: str = Form(...), manager: str = Form(...), manager_email: Optional[str] = Form(None),
+    invoice: Optional[str] = Form(None), details: str = Form(...), files: List[UploadFile] = File(None)
 ):
     try:
         details_dict = json.loads(details)
-        formatted_text = "--- ДЕТАЛІ ЗАЯВКИ ---\n"
-        for question, answer in details_dict.items():
-            formatted_text += f"{question}:\n{answer}\n\n"
-
+        formatted_text = "\n".join([f"{k}: {v}" for k, v in details_dict.items()])
         readable_type = TYPE_TRANSLATION.get(type, type)
-
+        
         bx_fields = {
             FIELDS_MAP["title"]: f"Рекламація: {client}",
             FIELDS_MAP["product"]: product,
             FIELDS_MAP["claim_type"]: readable_type,
             FIELDS_MAP["lot"]: lot,
-            FIELDS_MAP["invoice"]: invoice or "Не вказано",
+            FIELDS_MAP["invoice"]: invoice or "-",
             FIELDS_MAP["details"]: formatted_text,
             FIELDS_MAP["manager"]: manager,
             "OPENED": "Y"
         }
+        if manager_email: bx_fields[FIELD_MANAGER_EMAIL_IN_CLAIM] = manager_email
         
-        # Додаємо email менеджера в приховане поле, якщо воно налаштоване
-        if manager_email and FIELD_MANAGER_EMAIL != "ufCrm4_1769090000":
-             bx_fields[FIELD_MANAGER_EMAIL] = manager_email
-
         if files:
-            file_data_list = []
-            for file in files:
-                content = await file.read()
-                b64 = base64.b64encode(content).decode('utf-8')
-                file_data_list.append([file.filename, b64])
-            bx_fields[FIELDS_MAP["files"]] = file_data_list
+            file_list = []
+            for f in files:
+                c = await f.read()
+                file_list.append([f.filename, base64.b64encode(c).decode()])
+            bx_fields[FIELDS_MAP["files"]] = file_list
 
-        payload = {
-            "entityTypeId": SMART_PROCESS_ID,
-            "fields": bx_fields
-        }
-
-        response = requests.post(f"{BITRIX_WEBHOOK_URL}crm.item.add", json=payload)
-        result = response.json()
-
-        if "error" in result:
-            raise HTTPException(status_code=500, detail=f"Помилка Бітрикс: {result.get('error_description')}")
+        r = requests.post(f"{BITRIX_WEBHOOK_URL}crm.item.add", json={"entityTypeId": CLAIMS_SPA_ID, "fields": bx_fields})
+        res = r.json()
+        if "error" in res: raise HTTPException(500, res['error_description'])
         
-        new_id = result['result']['item']['id']
+        new_id = res['result']['item']['id']
         
-        # Сповіщення в Телеграм
-        tg_text = f"🚨 <b>Нова рекламація #{new_id}</b>\n\n👤 Від: {manager}\n🏥 Клієнт: {client}\n💊 Препарат: {product}\n📄 Тип: {readable_type}"
-        send_telegram(tg_text)
+        # 🔔 ДЗВІНОЧОК ДЛЯ МЕД. ВІДДІЛУ
+        notify_msg = f"🚨 Нова рекламація #{new_id}!\nКлієнт: {client}\nМенеджер: {manager}"
+        for uid in MED_DEPT_USER_IDS:
+            send_bitrix_notification(uid, notify_msg)
+
+        # ✈️ СПОВІЩЕННЯ В ТЕЛЕГРАМ (МЕНЕДЖЕРУ)
+        if manager_email:
+            mgr = find_manager_by_email(manager_email)
+            if mgr:
+                tg_id = mgr.get(MGR_FIELD_TG_ID)
+                if tg_id:
+                    send_telegram(tg_id, f"✅ <b>Заявка #{new_id} прийнята!</b>\nМи сповістимо вас про зміни.")
+        
+        # Адміну
+        if TG_ADMIN_CHAT_ID:
+            send_telegram(TG_ADMIN_CHAT_ID, f"📝 Створено заявку #{new_id}")
 
         return {"status": "success", "id": new_id}
-
     except Exception as e:
-        print("Server Error:", str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(500, str(e))
 
 # --- 2. СИНХРОНІЗАЦІЯ СТАТУСІВ ---
 @app.post("/api/sync_status")
