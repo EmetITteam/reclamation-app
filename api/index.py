@@ -411,43 +411,69 @@ async def get_comments(data: Dict[str, int] = Body(...)):
     return {"comments": comments}
 
 # --- 🔄 СТАТУСИ (WEBHOOK ВІД БІТРІКС) ---
+# --- 🔄 СТАТУСИ (ВИПРАВЛЕНО ДЛЯ 'DT1038_8:CLIENT') ---
 @app.post("/api/webhook/status_update")
 async def status_update(id: str, stage_id: str):
     EMAIL_MED_DEPT = "itd@emet.in.ua"
-
+    
     try:
-        # ВИПРАВЛЕННЯ ID: Беремо частину після останнього підкреслення (якщо це dynamic_1038_14 -> 14)
+        # Очистка ID
         clean_id = id.split('_')[-1] if '_' in id else id
-        # Для надійності лишаємо тільки цифри
         clean_id = "".join(filter(str.isdigit, clean_id))
         
         if not clean_id: return {"status": "error"}
         real_id = int(clean_id)
         
+        print(f"🔄 WEBHOOK UPDATE: Claim #{real_id}, Stage: {stage_id}")
+        
         LINK_TO_CRM = f"https://bitrix.emet.in.ua/crm/type/{CLAIMS_SPA_ID}/details/{real_id}/"
-
         stage_upper = stage_id.upper()
+
+        # --- ЛОГІКА СТАТУСІВ ---
+        
+        # 1. Нова
         is_new = any(x in stage_upper for x in ["NEW", "НОВА", "BEGIN"])
-        is_end = any(x in stage_upper for x in ["WON", "SUCCESS", "FAIL", "LOSE", "ВІДМОВА"])
+        
+        # 2. Успіх (Додали 'CLIENT')
+        is_success = any(x in stage_upper for x in ["SUCCESS", "WON", "CLIENT", "УСПІХ", "ВИКОНАНО"])
+        
+        # 3. Відмова
+        is_fail = any(x in stage_upper for x in ["FAIL", "LOSE", "ВІДМОВА"])
+        
+        is_end = is_success or is_fail
 
         if is_new or is_end:
             r = requests.post(f"{BITRIX_WEBHOOK_URL}crm.item.get", json={"entityTypeId": CLAIMS_SPA_ID, "id": real_id})
             item = r.json().get('result', {}).get('item', {})
             manager_mail = item.get(FIELD_MANAGER_EMAIL_IN_CLAIM)
             
+            print(f"   -> Status Logic: New={is_new}, Success={is_success} ('CLIENT' detected?), Fail={is_fail}")
+
+            # 🅰️ НОВА
             if is_new:
                 body = f"Нова рекламація #{real_id}. <br><a href='{LINK_TO_CRM}'>Відкрити картку</a>"
                 send_email(EMAIL_MED_DEPT, f"Нова рекламація #{real_id}", body)
             
-            elif is_end and manager_mail:
-                mgr = find_manager_by_email(manager_mail)
-                msg_text = f"Статус заявки #{real_id} змінено на: {stage_upper}"
+            # 🅱️ ЗАВЕРШЕНА
+            elif is_end:
+                status_text = "ВИРІШЕНО ✅" if is_success else "ВІДМОВЛЕНО ❌"
                 
-                if mgr and mgr.get(MGR_FIELD_TG_ID):
-                    send_telegram(mgr[MGR_FIELD_TG_ID], f"🔔 <b>Оновлення статусу!</b>\nЗаявка #{real_id}\nСтатус: {stage_upper}")
-                
-                send_email(manager_mail, f"Статус заявки #{real_id}", msg_text)
+                if manager_mail:
+                    mgr = find_manager_by_email(manager_mail)
+                    
+                    # Телеграм
+                    if mgr and mgr.get(MGR_FIELD_TG_ID):
+                        tg_msg = f"🔔 <b>Оновлення статусу!</b>\nЗаявка #{real_id}\nСтатус: {status_text}"
+                        send_telegram(mgr[MGR_FIELD_TG_ID], tg_msg)
+                        print(f"   -> TG sent to {mgr[MGR_FIELD_TG_ID]}")
+                    
+                    # Email
+                    msg_text = f"Статус заявки #{real_id} змінено на: {status_text}"
+                    send_email(manager_mail, f"Статус заявки #{real_id}", msg_text)
+                else:
+                    print("   -> No Manager Email found")
 
         return {"status": "ok"}
     except Exception as e:
+        print(f"❌ WEBHOOK ERROR: {e}")
         return {"status": "ok", "error": str(e)}
