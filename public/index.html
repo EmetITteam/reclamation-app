@@ -246,359 +246,86 @@
     </nav>
 
     <script>
-        // --- 1. ПОВНА, РОЗГОРНУТА КОНФІГУРАЦІЯ АНКЕТ (НІЯКИХ СКОРОЧЕНЬ) ---
+        // --- 1. КОНФІГУРАЦІЯ ---
         const FORMS_CONFIG = {
             'VITARAN': [
-                {
-                    id: 'date_complaint',
-                    label: 'Дата звернення пацієнта із скаргами',
-                    type: 'date'
-                },
-                {
-                    id: 'date_proc',
-                    label: 'Дата проведення процедури',
-                    type: 'date'
-                },
-                {
-                    id: 'tool',
-                    label: 'Чим проводили процедуру (голка, канюля), розмір',
-                    type: 'text'
-                },
-                {
-                    id: 'anesthesia',
-                    label: 'Чи проводили знеболювання (яким препаратом)',
-                    type: 'text'
-                },
-                {
-                    id: 'technique',
-                    label: 'Опишіть техніку виконання процедури',
-                    type: 'textarea'
-                },
-                {
-                    id: 'complaints_during',
-                    label: 'Скарги під час процедури',
-                    type: 'textarea'
-                },
-                {
-                    id: 'post_proc',
-                    label: 'Особливості постпроцедурного періоду',
-                    type: 'textarea'
-                },
-                {
-                    id: 'complaints_now',
-                    label: 'Скарги пацієнта в даний момент',
-                    type: 'textarea'
-                },
-                {
-                    id: 'status_localis',
-                    label: 'Status Localis (дані огляду)',
-                    type: 'textarea'
-                },
-                {
-                    id: 'allergies',
-                    label: 'Алергії на полінуклеотиди?',
-                    type: 'select',
-                    options: ['Ні', 'Так']
-                },
-                {
-                    id: 'illness',
-                    label: 'Чим хворів (ла) за останні 2 місяці?',
-                    type: 'textarea'
-                },
-                {
-                    id: 'cosmetics',
-                    label: 'Які косметичні засоби використовує?',
-                    type: 'text'
-                },
-                {
-                    id: 'meds',
-                    label: 'Які ліки приймає зараз?',
-                    type: 'textarea'
-                }
+                { id: 'date_complaint', label: 'Дата звернення пацієнта із скаргами', type: 'date' },
+                { id: 'date_proc', label: 'Дата проведення процедури', type: 'date' },
+                { id: 'tool', label: 'Чим проводили процедуру (голка, канюля), розмір', type: 'text' },
+                { id: 'anesthesia', label: 'Чи проводили знеболювання (яким препаратом)', type: 'text' },
+                { id: 'technique', label: 'Опишіть техніку виконання процедури', type: 'textarea' },
+                { id: 'complaints_during', label: 'Скарги під час процедури', type: 'textarea' },
+                { id: 'post_proc', label: 'Особливості постпроцедурного періоду', type: 'textarea' },
+                { id: 'complaints_now', label: 'Скарги пацієнта в даний момент', type: 'textarea' },
+                { id: 'status_localis', label: 'Status Localis (дані огляду)', type: 'textarea' },
+                { id: 'allergies', label: 'Алергії на полінуклеотиди?', type: 'select', options: ['Ні', 'Так'] },
+                { id: 'illness', label: 'Чим хворів (ла) за останні 2 місяці?', type: 'textarea' },
+                { id: 'cosmetics', label: 'Які косметичні засоби використовує?', type: 'text' },
+                { id: 'meds', label: 'Які ліки приймає зараз?', type: 'textarea' }
             ],
             'NEURONOX': [
-                {
-                    id: 'date_complaint',
-                    label: 'Дата звернення пацієнта',
-                    type: 'date'
-                },
-                {
-                    id: 'date_proc',
-                    label: 'Дата проведення процедури',
-                    type: 'date'
-                },
-                {
-                    id: 'date_dilution',
-                    label: 'Дата відновлення (розведення)',
-                    type: 'date'
-                },
-                {
-                    id: 'diluent',
-                    label: 'Чим відновлювали та об\'єм',
-                    type: 'text'
-                },
-                {
-                    id: 'anesthesia',
-                    label: 'Знеболення (препарат)',
-                    type: 'text'
-                },
-                {
-                    id: 'patient_age',
-                    label: 'Вік пацієнта',
-                    type: 'text'
-                },
-                {
-                    id: 'prev_botox_date',
-                    label: 'Дата попередньої ботулінотерапії',
-                    type: 'date'
-                },
-                {
-                    id: 'prev_botox_drug',
-                    label: 'Препарат попередньої процедури',
-                    type: 'text'
-                },
-                {
-                    id: 'prev_effect',
-                    label: 'Тривалість ефекту попер. процедури',
-                    type: 'text'
-                },
-                {
-                    id: 'illness_chronic',
-                    label: 'Захворювання (гострі, хронічні)',
-                    type: 'textarea'
-                },
-                {
-                    id: 'recent_infection',
-                    label: 'Як давно хворів простудними?',
-                    type: 'text'
-                },
-                {
-                    id: 'meds',
-                    label: 'Які ліки приймає?',
-                    type: 'textarea'
-                }
+                { id: 'date_complaint', label: 'Дата звернення пацієнта', type: 'date' },
+                { id: 'date_proc', label: 'Дата проведення процедури', type: 'date' },
+                { id: 'date_dilution', label: 'Дата відновлення (розведення)', type: 'date' },
+                { id: 'diluent', label: 'Чим відновлювали та об\'єм', type: 'text' },
+                { id: 'anesthesia', label: 'Знеболення (препарат)', type: 'text' },
+                { id: 'patient_age', label: 'Вік пацієнта', type: 'text' },
+                { id: 'prev_botox_date', label: 'Дата попередньої ботулінотерапії', type: 'date' },
+                { id: 'prev_botox_drug', label: 'Препарат попередньої процедури', type: 'text' },
+                { id: 'prev_effect', label: 'Тривалість ефекту попер. процедури', type: 'text' },
+                { id: 'illness_chronic', label: 'Захворювання (гострі, хронічні)', type: 'textarea' },
+                { id: 'recent_infection', label: 'Як давно хворів простудними?', type: 'text' },
+                { id: 'meds', label: 'Які ліки приймає?', type: 'textarea' }
             ],
             'NEURAMIS': [
-                {
-                    id: 'date_complaint',
-                    label: 'Дата звернення пацієнта',
-                    type: 'date'
-                },
-                {
-                    id: 'date_proc',
-                    label: 'Дата проведення процедури',
-                    type: 'date'
-                },
-                {
-                    id: 'tool',
-                    label: 'Інструмент (голка/канюля, розмір)',
-                    type: 'text'
-                },
-                {
-                    id: 'anesthesia',
-                    label: 'Знеболення (препарат)',
-                    type: 'text'
-                },
-                {
-                    id: 'complaints_during',
-                    label: 'Скарги під час процедури',
-                    type: 'textarea'
-                },
-                {
-                    id: 'post_proc',
-                    label: 'Особливості постпроцедурного періоду',
-                    type: 'textarea'
-                },
-                {
-                    id: 'complaints_now',
-                    label: 'Скарги на даний момент',
-                    type: 'textarea'
-                },
-                {
-                    id: 'status_localis',
-                    label: 'Status Localis (дані огляду)',
-                    type: 'textarea'
-                },
-                {
-                    id: 'prev_contour',
-                    label: 'Контурна пластика тут раніше?',
-                    type: 'textarea'
-                },
-                {
-                    id: 'prev_complaints',
-                    label: 'Скарги після попер. процедури?',
-                    type: 'textarea'
-                },
-                {
-                    id: 'hyaluronidase',
-                    label: 'Чи застосовували гіалуронідазу?',
-                    type: 'select',
-                    options: ['Ні', 'Так']
-                },
-                {
-                    id: 'allergies',
-                    label: 'Схильність до алергій?',
-                    type: 'select',
-                    options: ['Ні', 'Так']
-                },
-                {
-                    id: 'illness',
-                    label: 'Чим хворів за останні 2 міс?',
-                    type: 'textarea'
-                },
-                {
-                    id: 'meds',
-                    label: 'Які ліки приймає зараз?',
-                    type: 'textarea'
-                }
+                { id: 'date_complaint', label: 'Дата звернення пацієнта', type: 'date' },
+                { id: 'date_proc', label: 'Дата проведення процедури', type: 'date' },
+                { id: 'tool', label: 'Інструмент (голка/канюля, розмір)', type: 'text' },
+                { id: 'anesthesia', label: 'Знеболення (препарат)', type: 'text' },
+                { id: 'complaints_during', label: 'Скарги під час процедури', type: 'textarea' },
+                { id: 'post_proc', label: 'Особливості постпроцедурного періоду', type: 'textarea' },
+                { id: 'complaints_now', label: 'Скарги на даний момент', type: 'textarea' },
+                { id: 'status_localis', label: 'Status Localis (дані огляду)', type: 'textarea' },
+                { id: 'prev_contour', label: 'Контурна пластика тут раніше?', type: 'textarea' },
+                { id: 'prev_complaints', label: 'Скарги після попер. процедури?', type: 'textarea' },
+                { id: 'hyaluronidase', label: 'Чи застосовували гіалуронідазу?', type: 'select', options: ['Ні', 'Так'] },
+                { id: 'allergies', label: 'Схильність до алергій?', type: 'select', options: ['Ні', 'Так'] },
+                { id: 'illness', label: 'Чим хворів за останні 2 міс?', type: 'textarea' },
+                { id: 'meds', label: 'Які ліки приймає зараз?', type: 'textarea' }
             ],
             'ELLANSE': [
-                {
-                    id: 'date_complaint',
-                    label: 'Дата звернення пацієнта із скаргами',
-                    type: 'date'
-                },
-                {
-                    id: 'date_proc',
-                    label: 'Дата проведення процедури',
-                    type: 'date'
-                },
-                {
-                    id: 'tool',
-                    label: 'Чим проводили процедуру (розмір)',
-                    type: 'text'
-                },
-                {
-                    id: 'complaints_during',
-                    label: 'Скарги під час процедури',
-                    type: 'textarea'
-                },
-                {
-                    id: 'post_proc',
-                    label: 'Особливості постпроцедурного періоду',
-                    type: 'textarea'
-                },
-                {
-                    id: 'complaints_now',
-                    label: 'Скарги пацієнта в даний момент',
-                    type: 'textarea'
-                },
-                {
-                    id: 'status_localis',
-                    label: 'Status Localis (дані огляду)',
-                    type: 'textarea'
-                },
-                {
-                    id: 'vaccination',
-                    label: 'Дата останньої вакцинації, яка саме вакцина?',
-                    type: 'text'
-                },
-                {
-                    id: 'autoimmune',
-                    label: 'Захворювання сполучної тканини або автоімунні?',
-                    type: 'textarea'
-                },
-                {
-                    id: 'diet',
-                    label: 'Чи дотримується пацієнт особливої дієти?',
-                    type: 'text'
-                },
-                {
-                    id: 'illness',
-                    label: 'Чим хворів (ла) за останні 2 місяці?',
-                    type: 'textarea'
-                },
-                {
-                    id: 'meds',
-                    label: 'Які ліки / БАДи приймає зараз?',
-                    type: 'textarea'
-                },
-                {
-                    id: 'other_procs',
-                    label: 'Які процедури робили в цей період (препарати, час)?',
-                    type: 'textarea'
-                }
+                { id: 'date_complaint', label: 'Дата звернення пацієнта із скаргами', type: 'date' },
+                { id: 'date_proc', label: 'Дата проведення процедури', type: 'date' },
+                { id: 'tool', label: 'Чим проводили процедуру (розмір)', type: 'text' },
+                { id: 'complaints_during', label: 'Скарги під час процедури', type: 'textarea' },
+                { id: 'post_proc', label: 'Особливості постпроцедурного періоду', type: 'textarea' },
+                { id: 'complaints_now', label: 'Скарги пацієнта в даний момент', type: 'textarea' },
+                { id: 'status_localis', label: 'Status Localis (дані огляду)', type: 'textarea' },
+                { id: 'vaccination', label: 'Дата останньої вакцинації, яка саме вакцина?', type: 'text' },
+                { id: 'autoimmune', label: 'Захворювання сполучної тканини або автоімунні?', type: 'textarea' },
+                { id: 'diet', label: 'Чи дотримується пацієнт особливої дієти?', type: 'text' },
+                { id: 'illness', label: 'Чим хворів (ла) за останні 2 місяці?', type: 'textarea' },
+                { id: 'meds', label: 'Які ліки / БАДи приймає зараз?', type: 'textarea' },
+                { id: 'other_procs', label: 'Які процедури робили в цей період (препарати, час)?', type: 'textarea' }
             ],
             'PETARAN': [
-                {
-                    id: 'date_complaint',
-                    label: 'Дата звернення пацієнта із скаргами',
-                    type: 'date'
-                },
-                {
-                    id: 'date_proc',
-                    label: 'Дата проведення процедури',
-                    type: 'date'
-                },
-                {
-                    id: 'tool',
-                    label: 'Чим проводили процедуру (голка, канюля), розмір',
-                    type: 'text'
-                },
-                {
-                    id: 'dilution_lido',
-                    label: 'Як проводили розведення, чи додавали лідокаїн?',
-                    type: 'text'
-                },
-                {
-                    id: 'complaints_during',
-                    label: 'Скарги під час процедури',
-                    type: 'textarea'
-                },
-                {
-                    id: 'post_proc',
-                    label: 'Особливості постпроцедурного періоду',
-                    type: 'textarea'
-                },
-                {
-                    id: 'complaints_now',
-                    label: 'Скарги пацієнта в даний момент',
-                    type: 'textarea'
-                },
-                {
-                    id: 'status_localis',
-                    label: 'Status Localis (дані огляду)',
-                    type: 'textarea'
-                },
-                {
-                    id: 'allergies_poly',
-                    label: 'Алергія на полінуклеотиди?',
-                    type: 'select',
-                    options: ['Ні', 'Так']
-                },
-                {
-                    id: 'autoimmune',
-                    label: 'Захворювання сполучної тканини або автоімунні?',
-                    type: 'textarea'
-                },
-                {
-                    id: 'massage',
-                    label: 'Чи дотримувався пацієнт вимог щодо масажу?',
-                    type: 'select',
-                    options: ['Так', 'Ні', 'Не знаю']
-                },
-                {
-                    id: 'illness',
-                    label: 'Чим хворів (ла) за останні 2 місяці?',
-                    type: 'textarea'
-                },
-                {
-                    id: 'meds',
-                    label: 'Які ліки приймає зараз?',
-                    type: 'textarea'
-                }
+                { id: 'date_complaint', label: 'Дата звернення пацієнта із скаргами', type: 'date' },
+                { id: 'date_proc', label: 'Дата проведення процедури', type: 'date' },
+                { id: 'tool', label: 'Чим проводили процедуру (голка, канюля), розмір', type: 'text' },
+                { id: 'dilution_lido', label: 'Як проводили розведення, чи додавали лідокаїн?', type: 'text' },
+                { id: 'complaints_during', label: 'Скарги під час процедури', type: 'textarea' },
+                { id: 'post_proc', label: 'Особливості постпроцедурного періоду', type: 'textarea' },
+                { id: 'complaints_now', label: 'Скарги пацієнта в даний момент', type: 'textarea' },
+                { id: 'status_localis', label: 'Status Localis (дані огляду)', type: 'textarea' },
+                { id: 'allergies_poly', label: 'Алергія на полінуклеотиди?', type: 'select', options: ['Ні', 'Так'] },
+                { id: 'autoimmune', label: 'Захворювання сполучної тканини або автоімунні?', type: 'textarea' },
+                { id: 'massage', label: 'Чи дотримувався пацієнт вимог щодо масажу?', type: 'select', options: ['Так', 'Ні', 'Не знаю'] },
+                { id: 'illness', label: 'Чим хворів (ла) за останні 2 місяці?', type: 'textarea' },
+                { id: 'meds', label: 'Які ліки приймає зараз?', type: 'textarea' }
             ],
             'OTHER': [
-                {
-                    id: 'problem_desc',
-                    label: 'Детальний опис проблеми',
-                    type: 'textarea'
-                },
-                {
-                    id: 'date_proc',
-                    label: 'Дата процедури (якщо була)',
-                    type: 'date'
-                }
+                { id: 'problem_desc', label: 'Детальний опис проблеми', type: 'textarea' },
+                { id: 'date_proc', label: 'Дата процедури (якщо була)', type: 'date' }
             ]
         };
 
@@ -618,22 +345,31 @@
             'other':'📝 Інше'
         };
 
-        // --- 2. АВТОРИЗАЦІЯ ---
-        let currentUser = localStorage.getItem('emet_user');
-        
-        // Перевірка авторизації при завантаженні
+        // --- 2. ЗМІННІ ---
+        let allClaimsData = []; 
+
+        // --- 3. АВТОРИЗАЦІЯ ---
         function checkAuth() {
             const user = localStorage.getItem('emet_user');
             const email = localStorage.getItem('emet_email');
             
             if (user && email) {
                 showApp(user, email);
-                loadHistoryFromServer(email); // <--- ВАЖЛИВО: Вантажимо з сервера!
+                loadHistoryFromServer(email); 
             } else {
                 showLogin();
             }
         }
-        // Вхід через форму
+
+        function showApp(user, email) {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('current-user-display').innerText = user;
+        }
+
+        function showLogin() {
+            document.getElementById('login-screen').classList.remove('hidden');
+        }
+
         function loginManager(){ 
             const email = document.getElementById('login-email').value; 
             const pass = document.getElementById('login-password').value;
@@ -671,6 +407,12 @@
             });
         }
 
+        function loginAsDoctor() {
+            localStorage.setItem('emet_user', 'Лікар (Гість)');
+            localStorage.setItem('emet_email', ''); 
+            location.reload();
+        }
+
         function saveUserAndRedirect(data) {
             localStorage.setItem('emet_user', data.name);
             localStorage.setItem('emet_email', data.email);
@@ -678,26 +420,19 @@
             location.reload();
         }
 
-        // --- ДОБАВИТЬ ЭТИ ФУНКЦИИ ДЛЯ ПЕРЕКЛЮЧЕНИЯ ЭКРАНОВ ---
-        function showApp(user, email) {
-            // Прячем экран логина
-            document.getElementById('login-screen').classList.add('hidden');
-            // Показываем имя в шапке
-            document.getElementById('current-user-display').innerText = user;
+        function logoutUser() {
+            if(confirm('Ви дійсно хочете вийти з акаунту?')) {
+                localStorage.removeItem('emet_user');
+                localStorage.removeItem('emet_email');
+                location.reload();
+            }
         }
 
-        function showLogin() {
-            // Показываем экран логина
-            document.getElementById('login-screen').classList.remove('hidden');
-        }
-        // --- ГЛОБАЛЬНА ЗМІННА ДЛЯ ЗБЕРЕЖЕННЯ СПИСКУ ---
-        let allClaimsData = []; 
+        // --- 4. ІСТОРІЯ І ПОШУК (ВИПРАВЛЕНО) ---
 
-        // 1. ОНОВЛЕНА ФУНКЦІЯ ЗАВАНТАЖЕННЯ
         async function loadHistoryFromServer(email) {
             const list = document.getElementById('active-list'); 
             
-            // Показуємо спіннер тільки якщо список порожній
             if (list && list.children.length === 0) {
                 list.innerHTML = '<div class="text-center text-gray-400 py-4"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Завантаження історії...</div>';
             }
@@ -716,7 +451,6 @@
                 // ЗБЕРІГАЄМО ДАНІ В ГЛОБАЛЬНУ ЗМІННУ
                 allClaimsData = data.history || [];
                 
-                // Малюємо повний список
                 renderHistory(allClaimsData); 
                 
             } catch (error) {
@@ -725,27 +459,23 @@
             }
         }
 
-        // 2. НОВА ФУНКЦІЯ ФІЛЬТРАЦІЇ
         function filterHistory() {
             const query = document.getElementById('search-input').value.toLowerCase().trim();
             
             if (!query) {
-                renderHistory(allClaimsData); // Якщо пусто — показуємо все
+                renderHistory(allClaimsData); 
                 return;
             }
 
             const filtered = allClaimsData.filter(item => {
-                // Шукаємо в заголовку (Там зазвичай ФИО) або в ID
                 const titleMatch = (item.title || "").toLowerCase().includes(query);
                 const idMatch = String(item.id).includes(query);
-                // Якщо у вас в item.title пишеться "Рекламація: Іванов", то пошук спрацює
                 return titleMatch || idMatch;
             });
 
             renderHistory(filtered);
         }
 
-        // 3. ОНОВЛЕНА ФУНКЦІЯ ВІДОБРАЖЕННЯ
         function renderHistory(historyItems) {
             const list = document.getElementById('active-list');
             if (!list) return;
@@ -753,7 +483,6 @@
             list.innerHTML = ''; 
 
             if (!historyItems || historyItems.length === 0) {
-                // Якщо пошук нічого не дав, або список пустий
                 list.innerHTML = `
                     <div class="text-center mt-12 text-gray-400">
                         <i class="fa-solid fa-magnifying-glass text-4xl mb-3 opacity-20"></i>
@@ -770,7 +499,6 @@
                 let stClass = 'bg-blue-100 text-blue-700 border-blue-200';
                 let stText = 'Нова';
 
-                // Безпечна перевірка статусу
                 const status = (item.status || '').toUpperCase();
                 
                 if(status.includes('ВИРІШЕНО') || status.includes('SUCCESS') || status.includes('WON')) { 
@@ -797,60 +525,12 @@
             });
         }
 
-        // Вхід через форму (Сценарій Б)
-        function loginManager(){ 
-            const email = document.getElementById('login-email').value; 
-            const pass = document.getElementById('login-password').value;
-            const btn = document.getElementById('btn-login');
-            const err = document.getElementById('login-error');
-
-            if(!email || !pass) {
-                err.innerText = "Введіть Email та Пароль";
-                err.classList.remove('hidden');
-                return;
-            }
-
-            btn.innerText = "Перевірка...";
-            err.classList.add('hidden');
-
-            fetch('/api/login', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ email: email, password: pass })
-            })
-            .then(r => r.json())
-            .then(data => {
-                btn.innerText = "Увійти";
-                if(data.status === 'success') {
-                    saveUserAndRedirect(data);
-                } else {
-                    err.innerText = data.message;
-                    err.classList.remove('hidden');
-                }
-            })
-            .catch(() => {
-                btn.innerText = "Увійти";
-                err.innerText = "Помилка сервера";
-                err.classList.remove('hidden');
-            });
+        function syncHistory() {
+             const email = localStorage.getItem('emet_email');
+             if(email) loadHistoryFromServer(email);
         }
 
-        // Вхід Лікаря (Сценарій В)
-        function loginAsDoctor() {
-            localStorage.setItem('emet_user', 'Лікар (Гість)');
-            localStorage.setItem('emet_email', ''); // У лікаря немає службової пошти
-            location.reload();
-        }
-
-        function saveUserAndRedirect(data) {
-            localStorage.setItem('emet_user', data.name);
-            localStorage.setItem('emet_email', data.email);
-            // Очищуємо URL від параметрів, щоб було красиво
-            window.history.replaceState({}, document.title, "/");
-            location.reload();
-        }
-
-        // --- 3. ДИНАМІЧНА ФОРМА ---
+        // --- 5. ФОРМА ---
         function renderDynamicForm() {
             const p = document.getElementById('product').value;
             const t = document.getElementById('claimType').value;
@@ -864,7 +544,6 @@
             
             const medicalTypes = ['side_effect','complication','effectiveness'];
             
-            // Якщо це медичний тип і є анкета для цього препарату
             if(medicalTypes.includes(t) && FORMS_CONFIG[p]) {
                 document.querySelector('#dynamic-form-area h3').innerHTML = '<i class="fa-solid fa-user-doctor mr-1"></i>Медична анкета';
                 FORMS_CONFIG[p].forEach(x => {
@@ -878,7 +557,6 @@
                     f.insertAdjacentHTML('beforeend', h + '</div>');
                 });
             } else {
-                // Для якості, браку або якщо немає анкети
                 document.querySelector('#dynamic-form-area h3').innerHTML = '<i class="fa-solid fa-box-open mr-1"></i>Деталі інциденту';
                 const lbl = t === 'quality' ? 'Опишіть суть невідповідності якості' : 'Опишіть суть проблеми / браку';
                 f.innerHTML = `<div>
@@ -888,27 +566,32 @@
             }
         }
 
-        // --- 4. ВІДПРАВКА ФОРМИ ---
+        function previewFiles(){
+            const p = document.getElementById('preview-area'); 
+            p.innerHTML = '';
+            [].forEach.call(document.getElementById('dropzone-file').files, f => {
+                const r = new FileReader(); 
+                r.onload = e => { 
+                    p.innerHTML += `<div class="flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border border-gray-200 shadow-sm"><img src="${e.target.result}" class="w-full h-full object-cover"></div>`; 
+                }; 
+                r.readAsDataURL(f);
+            });
+        }
+
         function submitForm(e) {
             e.preventDefault();
             const btnT = document.getElementById('btn-text');
             const btnL = document.getElementById('btn-loader');
-            
-            // Показуємо лоадер
             btnT.innerText = 'Відправка...'; 
             btnL.classList.remove('hidden');
 
             const prod = document.getElementById('product').value;
             const type = document.getElementById('claimType').value;
-            
-            // Дані менеджера
             const manager = localStorage.getItem('emet_user') || 'Unknown';
             const email = localStorage.getItem('emet_email') || '';
 
-            // Збираємо деталі (динамічні поля)
             let det = {};
             const medTypes = ['side_effect','complication','effectiveness'];
-            
             if(medTypes.includes(type) && FORMS_CONFIG[prod]) {
                 FORMS_CONFIG[prod].forEach(x => { 
                     const el = document.getElementById('cust_' + x.id); 
@@ -919,7 +602,6 @@
                 if(el?.value) det[type === 'quality' ? 'Опис невідповідності' : 'Опис проблеми'] = el.value; 
             }
 
-            // Формуємо дані для відправки
             const fd = new FormData();
             fd.append('type', type);
             fd.append('client', document.getElementById('client').value);
@@ -930,11 +612,9 @@
             fd.append('manager_email', email);
             fd.append('details', JSON.stringify(det));
             
-            // Додаємо файли
             const files = document.getElementById('dropzone-file').files;
             for(let i=0; i<files.length; i++) fd.append('files', files[i]);
 
-            // Відправляємо на сервер
             fetch('/api/submit_claim', { method: 'POST', body: fd })
             .then(r => { 
                 if(!r.ok) throw new Error('Error'); 
@@ -942,17 +622,12 @@
             })
             .then(d => {
                 alert('✅ Рекламацію успішно створено! ID: ' + d.id);
-                
-                // 1. Очищуємо форму
                 document.getElementById('claimForm').reset();
                 document.getElementById('preview-area').innerHTML = '';
                 document.getElementById('dynamic-form-area').classList.add('hidden');
                 
-                // 2. Перемикаємось на вкладку історії
-                // (Це спрацює і завантажить нові дані, якщо у вас оновлена функція switchTab)
                 switchTab('history');
                 
-                // 3. Повертаємо кнопку в початковий стан
                 btnT.innerText = 'Відправити рекламацію'; 
                 btnL.classList.add('hidden');
             })
@@ -964,70 +639,16 @@
             });
         }
 
-        // --- 5. СИНХРОНІЗАЦІЯ СТАТУСІВ (ОНОВЛЕНО ПІД ВАШІ ВИМОГИ) ---
-        // --- ОНОВЛЕНА ФУНКЦІЯ (Просто просить дані у сервера) ---
-        function syncHistory() {
-             const email = localStorage.getItem('emet_email');
-             // Якщо є пошта - вантажимо історію з сервера
-             if(email) loadHistoryFromServer(email);
-        }
-
-
-        // --- 7. МОДАЛЬНЕ ВІКНО (ВИПРАВЛЕНО ВІДКРИТТЯ І СТАТУСИ) ---
+        // --- 6. МОДАЛЬНЕ ВІКНО І ЧАТ (ВІДПРАВКА КОМЕНТАРЯ) ---
+        
         function openModal(id) {
-            const h = JSON.parse(localStorage.getItem('emet_history')) || [];
-            // Шукаємо по ID (числовому або рядковому)
-            const c = h.find(item => parseInt(item.id) === parseInt(id));
-            if(!c) return;
-            
-            // Заповнення текстів
-            document.getElementById('m-id').innerText = `#${c.id}`;
-            document.getElementById('m-type').innerText = TYPE_LABELS[c.type] || c.type;
-            document.getElementById('m-client').innerText = c.client;
-            document.getElementById('m-product').innerText = c.product;
-            document.getElementById('m-lot').innerText = c.lot || '';
-            
-            // --- ЛОГІКА СТАТУСІВ (ДУБЛЮЄМО ТОЧНО ЯК У СПИСКУ) ---
-            let stClass = STATUS_CONFIG['new'].class;
-            let stText = 'Нова';
-            
-            if(c.bitrix_stage_id) {
-                const sid = c.bitrix_stage_id.toUpperCase();
-                
-                if(sid.includes(':NEW')) { 
-                    stClass = STATUS_CONFIG['new'].class; stText = 'Нова'; 
-                }
-                else if(sid.includes(':CLIENT') || sid.includes('SUCCESS') || sid.includes('WON')) { 
-                    stClass = STATUS_CONFIG['done'].class; stText = 'Вирішено'; 
-                }
-                else if(sid.includes('FAIL') || sid.includes('LOSE')) { 
-                    stClass = STATUS_CONFIG['reject'].class; stText = 'Відмова'; 
-                }
-                else { 
-                    stClass = STATUS_CONFIG['work'].class; stText = 'В роботі'; 
-                }
-            }
-            
-            const badge = document.getElementById('m-status-badge');
-            badge.className = `px-3 py-1 rounded-full text-xs font-bold uppercase ${stClass}`;
-            badge.innerText = stText;
-            
-            // Заповнення анкети
-            const dc = document.getElementById('m-dynamic-content'); 
-            dc.innerHTML = '';
-            if(c.details && Object.keys(c.details).length > 0) {
-                document.getElementById('m-dynamic-details').classList.remove('hidden');
-                for(const[k,v] of Object.entries(c.details)) {
-                    dc.innerHTML += `<div class="mb-2 border-b border-blue-100 last:border-0 pb-1 last:pb-0">
-                        <span class="text-xs text-gray-500 font-bold block uppercase">${k}:</span>
-                        <span class="text-gray-800">${v}</span>
-                    </div>`;
-                }
-            } else {
-                 document.getElementById('m-dynamic-details').classList.add('hidden');
-            }
+            document.getElementById('m-id').innerText = `#${id}`;
+            document.getElementById('m-type').innerText = 'Завантаження...';
+            document.getElementById('m-client').innerText = '';
+            document.getElementById('m-product').innerText = '';
+            document.getElementById('m-lot').innerText = '';
+            document.getElementById('m-dynamic-details').classList.add('hidden'); 
 
-            // Завантаження коментарів
             const commList = document.getElementById('m-comments-list');
             const commLoad = document.getElementById('m-comments-loader');
             const noComm = document.getElementById('m-no-comments');
@@ -1074,40 +695,8 @@
         function closeModal(){ 
             document.getElementById('details-modal').classList.add('hidden'); 
         }
-        
-        // --- 8. НАВІГАЦІЯ ---
-        // --- ОНОВЛЕНА НАВІГАЦІЯ (Не стирає список) ---
-        function switchTab(t){
-            document.getElementById('tab-new').classList.toggle('hidden', t !== 'new');
-            document.getElementById('tab-history').classList.toggle('hidden', t !== 'history');
-            
-            const navNew = document.getElementById('nav-new');
-            const navHist = document.getElementById('nav-history');
 
-            if(t === 'new') {
-                navNew.classList.remove('text-gray-400'); navNew.classList.add('text-blue-600');
-                navHist.classList.remove('text-blue-600'); navHist.classList.add('text-gray-400');
-            } else {
-                navHist.classList.remove('text-gray-400'); navHist.classList.add('text-blue-600');
-                navNew.classList.remove('text-blue-600'); navNew.classList.add('text-gray-400');
-                
-                // ГОЛОВНА ЗМІНА: Запускаємо завантаження з сервера, а не малюємо порожнє
-                const email = localStorage.getItem('emet_email');
-                if(email) loadHistoryFromServer(email);
-            }
-        }
-        function logoutUser() {
-            if(confirm('Ви дійсно хочете вийти з акаунту?')) {
-                localStorage.removeItem('emet_user');
-                localStorage.removeItem('emet_email');
-                // Можна також очистити історію, якщо хочете, щоб вона не була видна наступному юзеру
-                // localStorage.removeItem('emet_history'); 
-                location.reload();
-            }
-        }
-        // --- 8. ВІДПРАВКА КОМЕНТАРЯ ---
         async function sendReply() {
-            // Беремо ID з заголовка модалки (там текст "#123", прибираємо #)
             const idText = document.getElementById('m-id').innerText;
             const id = idText.replace('#', '');
             
@@ -1116,9 +705,8 @@
             const message = input.value.trim();
             const author = localStorage.getItem('emet_user') || 'Менеджер';
 
-            if (!message) return; // Пустий текст не шлемо
+            if (!message) return;
 
-            // Блокуємо кнопку, щоб не натиснули двічі
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
 
@@ -1136,8 +724,7 @@
                 const result = await response.json();
 
                 if (result.status === 'ok') {
-                    input.value = ''; // Очищаємо поле
-                    // Оновлюємо список коментарів (перезавантажуємо його)
+                    input.value = ''; 
                     openModal(id); 
                 } else {
                     alert('Помилка відправки: ' + (result.message || 'Unknown error'));
@@ -1147,22 +734,29 @@
                 console.error(error);
                 alert('Помилка з\'єднання');
             } finally {
-                // Розблокуємо кнопку
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
             }
         }
 
-        function previewFiles(){
-            const p = document.getElementById('preview-area'); 
-            p.innerHTML = '';
-            [].forEach.call(document.getElementById('dropzone-file').files, f => {
-                const r = new FileReader(); 
-                r.onload = e => { 
-                    p.innerHTML += `<div class="flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border border-gray-200 shadow-sm"><img src="${e.target.result}" class="w-full h-full object-cover"></div>`; 
-                }; 
-                r.readAsDataURL(f);
-            });
+        // --- 7. НАВІГАЦІЯ ---
+        function switchTab(t){
+            document.getElementById('tab-new').classList.toggle('hidden', t !== 'new');
+            document.getElementById('tab-history').classList.toggle('hidden', t !== 'history');
+            
+            const navNew = document.getElementById('nav-new');
+            const navHist = document.getElementById('nav-history');
+
+            if(t === 'new') {
+                navNew.classList.remove('text-gray-400'); navNew.classList.add('text-blue-600');
+                navHist.classList.remove('text-blue-600'); navHist.classList.add('text-gray-400');
+            } else {
+                navHist.classList.remove('text-gray-400'); navHist.classList.add('text-blue-600');
+                navNew.classList.remove('text-blue-600'); navNew.classList.add('text-gray-400');
+                
+                const email = localStorage.getItem('emet_email');
+                if(email) loadHistoryFromServer(email);
+            }
         }
 
         // Запуск перевірки авторизації
