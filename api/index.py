@@ -483,67 +483,81 @@ async def status_update(id: str, stage_id: str):
         return {"status": "ok", "error": str(e)}
 
 # --- 📨 ВЕБХУК ПОДІЙ (КОМЕНТАРІ З БІТРІКС -> ТЕЛЕГРАМ) ---
+# --- 📨 ВЕБХУК (РЕЖИМ ДИАГНОСТИКИ) ---
 @app.post("/api/webhook/bitrix_event")
 async def bitrix_event(request: Request):
     try:
-        # Бітрікс надсилає дані як Form Data
         form = await request.form()
-        event = form.get('event')
+        fields = dict(form)
+        event = fields.get('event')
         
-        # Нас цікавить тільки додавання коментаря
+        print(f"🔍 WEBHOOK RECEIVED: {event}") # Лог 1
+        
         if event == 'ONCRMTIMELINECOMMENTADD':
-            # Отримуємо ID коментаря та ID заявки
-            fields = dict(form)
             comment_id = fields.get('data[FIELDS][ID]')
-            entity_id = fields.get('data[FIELDS][ENTITY_ID]') # ID заявки
-            entity_type = fields.get('data[FIELDS][ENTITY_TYPE_ID]') # Тип сутності
+            entity_id = fields.get('data[FIELDS][ENTITY_ID]')
+            entity_type = fields.get('data[FIELDS][ENTITY_TYPE]') # text like 'dynamic_1038'
             
-            # Перевірка: чи це коментар саме до нашого Смарт-процесу (SPA_ID)
-            # Тип сутності для SPA формується динамічно, але зазвичай це просто прив'язка до ID
-            # Якщо ви не впевнені в ID типу, можна просто перевірити entity_id через API
-            
-            if not comment_id or not entity_id: return {"status": "ignored"}
+            print(f"   -> Data: CommentID={comment_id}, EntityID={entity_id}, Type={entity_type}") # Лог 2
 
-            # 1. Отримуємо текст коментаря (бо вебхук дає тільки ID)
-            r_com = requests.post(f"{BITRIX_WEBHOOK_URL}crm.timeline.comment.get", json={"id": comment_id})
-            comment_data = r_com.json().get('result', {})
-            comment_text = comment_data.get('COMMENT', '')
-            author_id = comment_data.get('AUTHOR_ID')
-            
-            # ⛔️ ФІЛЬТР "ЛУНА": Не надсилати в ТГ те, що ми самі відправили з ТГ/Додатка
-            # Ми помічаємо свої повідомлення емодзі 📱 або 👨‍💻
-            if "📱" in comment_text or "👨‍💻" in comment_text or "URL=" in comment_text:
-                print(f"   -> Ignored echo comment #{comment_id}")
+            if not comment_id or not entity_id: 
+                print("   -> ❌ Missing ID or EntityID")
                 return {"status": "ignored"}
 
-            # 2. Отримуємо дані заявки, щоб знайти менеджера
-            r_item = requests.post(f"{BITRIX_WEBHOOK_URL}crm.item.get", json={"entityTypeId": CLAIMS_SPA_ID, "id": entity_id})
-            item = r_item.json().get('result', {}).get('item', {})
+            # 1. Читаем текст комментария
+            r_com = requests.post(f"{BITRIX_WEBHOOK_URL}crm.timeline.comment.get", json={"id": comment_id})
+            comment_res = r_com.json()
+            comment_data = comment_res.get('result', {})
             
-            if not item: return {"status": "ignored"} # Це коментар не до рекламації
+            if not comment_data:
+                print(f"   -> ❌ Comment not found in Bitrix API. Resp: {comment_res}")
+                return {"status": "error"}
+                
+            comment_text = comment_data.get('COMMENT', '')
+            author_id = comment_data.get('AUTHOR_ID')
+            print(f"   -> Text: {comment_text[:20]}... | Author: {author_id}") # Лог 3
+
+            # Фильтр "Эхо"
+            if "📱" in comment_text or "👨‍💻" in comment_text or "URL=" in comment_text:
+                print(f"   -> 🚫 Ignored ECHO (system message)")
+                return {"status": "ignored"}
+
+            # 2. Ищем заявку в нашем Смарт-процессе
+            r_item = requests.post(f"{BITRIX_WEBHOOK_URL}crm.item.get", json={"entityTypeId": CLAIMS_SPA_ID, "id": entity_id})
+            item_res = r_item.json()
+            item = item_res.get('result', {}).get('item', {})
+            
+            if not item:
+                print(f"   -> ❌ Item #{entity_id} NOT FOUND in SPA {CLAIMS_SPA_ID}. Is it another entity?")
+                # Возможно, комментарий пришел к Лиду или Сделке, а не к Рекламации
+                return {"status": "ignored"}
             
             manager_mail = item.get(FIELD_MANAGER_EMAIL_IN_CLAIM)
-            claim_title = item.get("title", f"Заявка #{entity_id}")
+            print(f"   -> Item Found! Manager Email: {manager_mail}") # Лог 4
 
-            # 3. Шукаємо менеджера і шлемо в ТГ
+            # 3. Отправляем в ТГ
             if manager_mail:
                 mgr = find_manager_by_email(manager_mail)
                 if mgr and mgr.get(MGR_FIELD_TG_ID):
+                    print(f"   -> Sending TG to ID: {mgr[MGR_FIELD_TG_ID]}") # Лог 5
                     
-                    # Дізнаємося ім'я автора коментаря (співробітника мед. відділу)
-                    author_name = "Медичний відділ"
+                    # Получаем имя автора
+                    author_name = "Колега"
                     try:
                         u_req = requests.post(f"{BITRIX_WEBHOOK_URL}user.get", json={"ID": author_id})
                         users = u_req.json().get('result', [])
                         if users: author_name = f"{users[0]['NAME']} {users[0]['LAST_NAME']}"
                     except: pass
                     
-                    # Відправка
+                    claim_title = item.get("title", f"Заявка #{entity_id}")
                     msg = f"💬 <b>Новий коментар!</b>\n{claim_title}\n\n👤 <b>{author_name}:</b>\n{comment_text}\n\n<i>Ви можете відповісти на це повідомлення</i>"
                     send_telegram(mgr[MGR_FIELD_TG_ID], msg)
-                    print(f"   -> Comment notification sent to {manager_mail}")
+                else:
+                    print("   -> ❌ Manager found via Email, but no TG_ID connected.")
+            else:
+                print("   -> ❌ Claim has NO manager email.")
 
         return {"status": "ok"}
     except Exception as e:
-        print(f"❌ EVENT ERROR: {e}")
+        print(f"❌ CRITICAL ERROR: {e}")
         return {"status": "error"}
