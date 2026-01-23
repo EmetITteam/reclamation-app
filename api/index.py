@@ -358,6 +358,49 @@ async def add_comment(data: CommentModel):
         print(f"Add Comment Error: {e}")
         return {"status": "error", "message": str(e)}
 
+# --- 7. ОТРИМАННЯ ДЕТАЛЕЙ ЗАЯВКИ (НОВЕ) ---
+@app.post("/api/get_claim_details")
+async def get_claim_details(data: Dict[str, int] = Body(...)):
+    item_id = data.get('id')
+    if not item_id: return {"status": "error"}
+
+    try:
+        # Запитуємо конкретну заявку
+        r = requests.post(f"{BITRIX_WEBHOOK_URL}crm.item.get", json={
+            "entityTypeId": SMART_PROCESS_ID,
+            "id": item_id
+        })
+        res = r.json()
+        
+        if "result" not in res:
+            return {"status": "error"}
+
+        item = res['result']['item']
+        
+        # Визначаємо статус для краси
+        stage = item.get("stageId", "")
+        status_text = "В обробці"
+        if any(x in stage for x in ["WON", "SUCCESS", "ВИКОНАНО", "УСПІХ"]): status_text = "Вирішено"
+        elif any(x in stage for x in ["FAIL", "LOSE", "ВІДМОВА"]): status_text = "Відмовлено"
+        elif any(x in stage for x in ["NEW", "НОВА"]): status_text = "Нова"
+
+        # Формуємо красиву відповідь, використовуючи ваші коди полів
+        return {
+            "status": "ok",
+            "data": {
+                "id": item.get("id"),
+                "title": item.get("title"),
+                "product": item.get(FIELDS_MAP["product"]),
+                "lot": item.get(FIELDS_MAP["lot"]),
+                "client": item.get("title").replace("Рекламація: ", ""), # Витягуємо ім'я з заголовка
+                "details": item.get(FIELDS_MAP["details"]), # Текст анкети
+                "status_text": status_text
+            }
+        }
+    except Exception as e:
+        print(f"Details Error: {e}")
+        return {"status": "error"}
+
 # --- 4. WEBHOOK ВІД БІТРІКС (РОЗДІЛЕННЯ ПОТОКІВ) ---
 @app.post("/api/webhook/status_update")
 async def status_update(
