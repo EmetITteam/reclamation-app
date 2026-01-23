@@ -257,49 +257,70 @@ async def get_comments(data: Dict[str, int] = Body(...)):
         return {"comments": comments}
     except Exception: return {"comments": []}
 
-# --- 5. ОТРИМАННЯ ІСТОРІЇ ЗА EMAIL ---
+# --- 5. ОТРИМАННЯ ІСТОРІЇ (FIXED) ---
 @app.post("/api/get_history")
 async def get_history(email: str = Form(...)):
+    print(f"SEARCHING HISTORY FOR: {email}") # Лог для перевірки
     try:
-        # Питаємо Бітрікс: дай список, де Email Менеджера = email
-        r = requests.post(f"{BITRIX_WEBHOOK_URL}crm.item.list", json={
+        # Перевірка на пустий email
+        if not email:
+            print("Email is empty")
+            return {"history": []}
+
+        # Питаємо Бітрікс
+        payload = {
             "entityTypeId": SMART_PROCESS_ID,
-            "filter": { FIELD_MANAGER_EMAIL: email }, # Фільтруємо по нашому полю
-            "select": ["id", "title", "stageId", "createdTime"], # Беремо тільки потрібне
-            "order": { "id": "DESC" } # Сортуємо: найновіші зверху
-        })
+            "filter": { FIELD_MANAGER_EMAIL: email }, 
+            "select": ["id", "title", "stageId", "createdTime"],
+            "order": { "id": "DESC" }
+        }
+        
+        r = requests.post(f"{BITRIX_WEBHOOK_URL}crm.item.list", json=payload)
+        
+        # Якщо Бітрікс повернув не 200 або не JSON
+        if r.status_code != 200:
+            print(f"Bitrix HTTP Error: {r.status_code} - {r.text}")
+            return {"history": []}
+            
         data = r.json()
+
+        # Якщо Бітрікс повернув помилку API (наприклад, невірне поле)
+        if "error" in data:
+            print(f"Bitrix API Error: {data}")
+            return {"history": []}
 
         history = []
         if "result" in data and "items" in data["result"]:
             for item in data["result"]["items"]:
-                # Розшифровуємо стадію для краси (можна додати свої коди)
                 stage = item.get("stageId", "")
                 status_text = "В обробці"
-                status_color = "text-yellow-600" # Жовтий
+                status_color = "text-yellow-600"
                 
-                if "WON" in stage or "SUCCESS" in stage or "ВИКОНАНО" in stage:
+                # Визначаємо статус
+                if any(x in stage for x in ["WON", "SUCCESS", "ВИКОНАНО", "УСПІХ"]):
                     status_text = "Вирішено"
                     status_color = "text-green-600"
-                elif "FAIL" in stage or "LOSE" in stage or "ВІДМОВА" in stage:
+                elif any(x in stage for x in ["FAIL", "LOSE", "ВІДМОВА", "ПРОВАЛ"]):
                     status_text = "Відмовлено"
                     status_color = "text-red-600"
-                elif "NEW" in stage:
+                elif any(x in stage for x in ["NEW", "НОВА", "BEGIN"]):
                      status_text = "Нова"
                      status_color = "text-blue-600"
 
                 history.append({
                     "id": item["id"],
                     "title": item["title"],
-                    "date": item["createdTime"][:10], # Тільки дата (без часу)
+                    "date": item["createdTime"][:10],
                     "status": status_text,
                     "color": status_color
                 })
         
+        print(f"Found {len(history)} items")
         return {"history": history}
 
     except Exception as e:
-        print(f"History Error: {e}")
+        print(f"CRITICAL HISTORY ERROR: {e}")
+        # Повертаємо пустий список, щоб фронтенд не ламався
         return {"history": []}
 
 # --- 6. ДОДАВАННЯ КОМЕНТАРЯ (ЧАТ) ---
