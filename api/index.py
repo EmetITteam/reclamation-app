@@ -414,7 +414,7 @@ async def get_comments(data: Dict[str, int] = Body(...)):
     return {"comments": comments}
 
 # --- 🔄 СТАТУСИ (WEBHOOK ВІД БІТРІКС) ---
-# --- 🔄 СТАТУСИ (ВИПРАВЛЕНО ДЛЯ 'DT1038_8:CLIENT') ---
+# --- 🔄 СТАТУСИ (ИСПРАВЛЕНО: ДОБАВЛЕН РУССКИЙ ЯЗЫК) ---
 @app.post("/api/webhook/status_update")
 async def status_update(id: str, stage_id: str):
     EMAIL_MED_DEPT = "itd@emet.in.ua"
@@ -430,18 +430,18 @@ async def status_update(id: str, stage_id: str):
         print(f"🔄 WEBHOOK UPDATE: Claim #{real_id}, Stage: {stage_id}")
         
         LINK_TO_CRM = f"https://bitrix.emet.in.ua/crm/type/{CLAIMS_SPA_ID}/details/{real_id}/"
-        stage_upper = stage_id.upper()
+        stage_upper = stage_id.upper() # Превращаем в верхний регистр (ВЫПОЛНЕНО)
 
-        # --- ЛОГІКА СТАТУСІВ ---
+        # --- ЛОГИКА СТАТУСОВ ---
         
-        # 1. Нова
+        # 1. Новая
         is_new = any(x in stage_upper for x in ["NEW", "НОВА", "BEGIN"])
         
-        # 2. Успіх (Додали 'CLIENT')
-        is_success = any(x in stage_upper for x in ["SUCCESS", "WON", "CLIENT", "УСПІХ", "ВИКОНАНО"])
+        # 2. Успех (Добавил: ВЫПОЛНЕНО, ГОТОВО, CLIENT, DONE)
+        is_success = any(x in stage_upper for x in ["SUCCESS", "WON", "CLIENT", "УСПІХ", "ВИКОНАНО", "ВЫПОЛНЕНО", "ГОТОВО", "DONE"])
         
-        # 3. Відмова
-        is_fail = any(x in stage_upper for x in ["FAIL", "LOSE", "ВІДМОВА"])
+        # 3. Отказ (Добавил: ОТКАЗ)
+        is_fail = any(x in stage_upper for x in ["FAIL", "LOSE", "ВІДМОВА", "ОТКАЗ"])
         
         is_end = is_success or is_fail
 
@@ -450,9 +450,9 @@ async def status_update(id: str, stage_id: str):
             item = r.json().get('result', {}).get('item', {})
             manager_mail = item.get(FIELD_MANAGER_EMAIL_IN_CLAIM)
             
-            print(f"   -> Status Logic: New={is_new}, Success={is_success} ('CLIENT' detected?), Fail={is_fail}")
+            print(f"   -> Status Logic: New={is_new}, Success={is_success} (Found 'ВЫПОЛНЕНО'?), Fail={is_fail}")
 
-            # 🅰️ НОВА
+            # 🅰️ НОВАЯ
             if is_new:
                 body = f"Нова рекламація #{real_id}. <br><a href='{LINK_TO_CRM}'>Відкрити картку</a>"
                 send_email(EMAIL_MED_DEPT, f"Нова рекламація #{real_id}", body)
@@ -473,6 +473,7 @@ async def status_update(id: str, stage_id: str):
                     # Email
                     msg_text = f"Статус заявки #{real_id} змінено на: {status_text}"
                     send_email(manager_mail, f"Статус заявки #{real_id}", msg_text)
+                    print(f"   -> Email sent to {manager_mail}")
                 else:
                     print("   -> No Manager Email found")
 
