@@ -302,6 +302,40 @@ async def get_history(email: str = Form(...)):
         print(f"History Error: {e}")
         return {"history": []}
 
+# --- 6. ДОДАВАННЯ КОМЕНТАРЯ (ЧАТ) ---
+class CommentModel(BaseModel):
+    id: int
+    message: str
+    author: str
+
+@app.post("/api/add_comment")
+async def add_comment(data: CommentModel):
+    try:
+        # Форматуємо текст, щоб було видно, хто писав
+        formatted_message = f"👨‍💻 <b>{data.author}</b> (Менеджер):<br>{data.message}"
+        
+        # Відправляємо в Бітрікс (Timeline)
+        # ENTITY_TYPE="dynamic_{ID}", де ID - це номер вашого смарт-процесу (1038)
+        r = requests.post(f"{BITRIX_WEBHOOK_URL}crm.timeline.comment.add", json={
+            "fields": {
+                "ENTITY_ID": data.id,
+                "ENTITY_TYPE": "dynamic_1038", 
+                "COMMENT": formatted_message
+            }
+        })
+        
+        result = r.json()
+        
+        if "result" in result:
+            return {"status": "ok"}
+        else:
+            print(f"Bitrix Error: {result}")
+            return {"status": "error", "message": "Bitrix rejected"}
+
+    except Exception as e:
+        print(f"Add Comment Error: {e}")
+        return {"status": "error", "message": str(e)}
+
 # --- 4. WEBHOOK ВІД БІТРІКС (РОЗДІЛЕННЯ ПОТОКІВ) ---
 @app.post("/api/webhook/status_update")
 async def status_update(
