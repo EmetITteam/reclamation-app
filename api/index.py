@@ -6,6 +6,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Body
 from typing import List, Optional, Dict, Any
+from pydantic import BaseModel  # <--- ОСЬ ЦЬОГО НЕ ВИСТАЧАЛО!
 
 app = FastAPI()
 
