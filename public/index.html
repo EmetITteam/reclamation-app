@@ -199,9 +199,24 @@
                         
                         <div id="m-comments-list" class="space-y-3 text-sm"></div>
                         
-                        <div id="m-no-comments" class="text-xs text-gray-400 italic hidden text-center py-2 bg-gray-50 rounded">
-                            Немає нових повідомлень
+                        <div id="m-comments-list" class="space-y-3 text-sm max-h-60 overflow-y-auto mb-3"></div>
+                        
+                    <div id="m-no-comments" class="text-xs text-gray-400 italic hidden text-center py-2 bg-gray-50 rounded">
+                        Немає нових повідомлень
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-gray-100">
+                        <label class="text-xs font-bold text-gray-400 uppercase mb-1 block">Ваша відповідь</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="reply-input" 
+                                class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none transition" 
+                                placeholder="Напишіть повідомлення...">
+                            <button onclick="sendReply()" id="btn-reply" 
+                                class="bg-blue-600 text-white rounded-lg px-4 py-2 text-sm font-bold hover:bg-blue-700 transition flex items-center justify-center min-w-[50px]">
+                                <i class="fa-solid fa-paper-plane"></i>
+                            </button>
                         </div>
+                    </div>
                     </div>
 
                     <div id="m-dynamic-details" class="hidden border-t pt-4">
@@ -1088,6 +1103,53 @@
                 // Можна також очистити історію, якщо хочете, щоб вона не була видна наступному юзеру
                 // localStorage.removeItem('emet_history'); 
                 location.reload();
+            }
+        }
+        // --- 8. ВІДПРАВКА КОМЕНТАРЯ ---
+        async function sendReply() {
+            // Беремо ID з заголовка модалки (там текст "#123", прибираємо #)
+            const idText = document.getElementById('m-id').innerText;
+            const id = idText.replace('#', '');
+            
+            const input = document.getElementById('reply-input');
+            const btn = document.getElementById('btn-reply');
+            const message = input.value.trim();
+            const author = localStorage.getItem('emet_user') || 'Менеджер';
+
+            if (!message) return; // Пустий текст не шлемо
+
+            // Блокуємо кнопку, щоб не натиснули двічі
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+            try {
+                const response = await fetch('/api/add_comment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id: parseInt(id),
+                        message: message,
+                        author: author
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'ok') {
+                    input.value = ''; // Очищаємо поле
+                    // Оновлюємо список коментарів (перезавантажуємо його)
+                    openModal(id); 
+                } else {
+                    alert('Помилка відправки: ' + (result.message || 'Unknown error'));
+                }
+
+            } catch (error) {
+                console.error(error);
+                alert('Помилка з\'єднання');
+            } finally {
+                // Розблокуємо кнопку
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
             }
         }
 
