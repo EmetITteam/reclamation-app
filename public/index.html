@@ -140,6 +140,12 @@
                 <div class="loader h-5 w-5 mx-auto border-blue-500"></div>
                 <p class="text-xs text-gray-400 mt-2">Синхронізація з Бітрікс...</p>
             </div>
+            <div class="relative mb-4">
+                <input type="text" id="search-input" oninput="filterHistory()" 
+                    class="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition" 
+                    placeholder="Пошук за прізвищем або ID...">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-3.5 text-gray-400"></i>
+            </div>
             
             <div id="active-list" class="space-y-3 mb-6"></div>
             <div id="empty-state" class="hidden text-center mt-12 text-gray-400">
@@ -669,12 +675,17 @@
             // Показываем экран логина
             document.getElementById('login-screen').classList.remove('hidden');
         }
-        // --- НОВА ФУНКЦІЯ: ЗАВАНТАЖЕННЯ З СЕРВЕРА ---
+        // --- ГЛОБАЛЬНА ЗМІННА ДЛЯ ЗБЕРЕЖЕННЯ СПИСКУ ---
+        let allClaimsData = []; 
+
+        // 1. ОНОВЛЕНА ФУНКЦІЯ ЗАВАНТАЖЕННЯ
         async function loadHistoryFromServer(email) {
-           // БЫЛО: const list = document.getElementById('history-list');
-           // СТАЛО:
-            const list = document.getElementById('active-list');
-            list.innerHTML = '<div class="text-center text-gray-400 py-4"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Завантаження історії...</div>';
+            const list = document.getElementById('active-list'); 
+            
+            // Показуємо спіннер тільки якщо список порожній
+            if (list && list.children.length === 0) {
+                list.innerHTML = '<div class="text-center text-gray-400 py-4"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Завантаження історії...</div>';
+            }
 
             try {
                 const formData = new FormData();
@@ -686,49 +697,86 @@
                 });
                 
                 const data = await response.json();
-                renderHistory(data.history); // Малюємо те, що прийшло з сервера
+                
+                // ЗБЕРІГАЄМО ДАНІ В ГЛОБАЛЬНУ ЗМІННУ
+                allClaimsData = data.history || [];
+                
+                // Малюємо повний список
+                renderHistory(allClaimsData); 
                 
             } catch (error) {
                 console.error('Помилка завантаження історії:', error);
-                list.innerHTML = '<div class="text-center text-red-400">Не вдалося завантажити історію</div>';
+                if (list) list.innerHTML = '<div class="text-center text-red-400">Не вдалося завантажити історію</div>';
             }
         }
 
-        // Функція малювання списку (оновлена)
+        // 2. НОВА ФУНКЦІЯ ФІЛЬТРАЦІЇ
+        function filterHistory() {
+            const query = document.getElementById('search-input').value.toLowerCase().trim();
+            
+            if (!query) {
+                renderHistory(allClaimsData); // Якщо пусто — показуємо все
+                return;
+            }
+
+            const filtered = allClaimsData.filter(item => {
+                // Шукаємо в заголовку (Там зазвичай ФИО) або в ID
+                const titleMatch = (item.title || "").toLowerCase().includes(query);
+                const idMatch = String(item.id).includes(query);
+                // Якщо у вас в item.title пишеться "Рекламація: Іванов", то пошук спрацює
+                return titleMatch || idMatch;
+            });
+
+            renderHistory(filtered);
+        }
+
+        // 3. ОНОВЛЕНА ФУНКЦІЯ ВІДОБРАЖЕННЯ
         function renderHistory(historyItems) {
-            // БЫЛО: const list = document.getElementById('history-list');
-           // СТАЛО:
             const list = document.getElementById('active-list');
-            list.innerHTML = ''; // Очистити список
+            if (!list) return;
+            
+            list.innerHTML = ''; 
 
             if (!historyItems || historyItems.length === 0) {
-                list.innerHTML = '<div class="text-center text-gray-400 py-4">Історія звернень порожня</div>';
+                // Якщо пошук нічого не дав, або список пустий
+                list.innerHTML = `
+                    <div class="text-center mt-12 text-gray-400">
+                        <i class="fa-solid fa-magnifying-glass text-4xl mb-3 opacity-20"></i>
+                        <p>Нічого не знайдено</p>
+                    </div>`;
                 return;
             }
 
             historyItems.forEach(item => {
                 const div = document.createElement('div');
-                div.className = 'border-l-4 border-blue-500 bg-gray-50 p-3 rounded shadow-sm hover:bg-white transition';
-                // Ми використовуємо класи кольорів, які передав Python (item.color)
-                // Але оскільки Tailwind не бачить їх динамічно, продублюємо логіку тут або просто використаємо стиль
+                div.className = 'bg-white p-4 rounded-xl shadow-sm mb-3 border border-gray-100 cursor-pointer active:bg-gray-50 transition';
+                div.onclick = function() { openModal(item.id); };
+
+                let stClass = 'bg-blue-100 text-blue-700 border-blue-200';
+                let stText = 'Нова';
+
+                // Безпечна перевірка статусу
+                const status = (item.status || '').toUpperCase();
                 
-                // Простий хак для кольорів, якщо класи не підтягнуться
-                let statusStyle = 'color: #ca8a04;'; // yellow
-                if(item.status === 'Вирішено') statusStyle = 'color: #16a34a;'; // green
-                if(item.status === 'Відмовлено') statusStyle = 'color: #dc2626;'; // red
-                if(item.status === 'Нова') statusStyle = 'color: #2563eb;'; // blue
+                if(status.includes('ВИРІШЕНО') || status.includes('SUCCESS') || status.includes('WON')) { 
+                    stClass = 'bg-green-100 text-green-700 border-green-200'; stText = 'Вирішено'; 
+                }
+                else if(status.includes('ВІДМОВА') || status.includes('FAIL') || status.includes('LOSE')) { 
+                    stClass = 'bg-red-100 text-red-700 border-red-200'; stText = 'Відмова'; 
+                }
+                else if(status.includes('НОВА') || status.includes('NEW')) { 
+                    stClass = 'bg-blue-100 text-blue-700 border-blue-200'; stText = 'Нова'; 
+                }
+                else { 
+                    stClass = 'bg-yellow-100 text-yellow-700 border-yellow-200'; stText = 'В роботі'; 
+                }
 
                 div.innerHTML = `
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <div class="font-bold text-gray-700">Заявка #${item.id}</div>
-                            <div class="text-xs text-gray-500">${item.title}</div>
-                            <div class="text-xs text-gray-400 mt-1">${item.date}</div>
-                        </div>
-                        <div class="text-sm font-bold" style="${statusStyle}">
-                            ${item.status}
-                        </div>
+                    <div class="flex justify-between text-xs text-gray-400 font-bold mb-1">
+                        <span>#${item.id} • ${item.date}</span>
+                        <span class="${stClass} px-2 py-0.5 rounded border uppercase">${stText}</span>
                     </div>
+                    <div class="font-bold text-sm text-gray-800">${item.title}</div>
                 `;
                 list.appendChild(div);
             });
