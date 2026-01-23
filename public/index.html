@@ -140,6 +140,7 @@
                 <div class="loader h-5 w-5 mx-auto border-blue-500"></div>
                 <p class="text-xs text-gray-400 mt-2">Синхронізація з Бітрікс...</p>
             </div>
+            
             <div class="relative mb-4">
                 <input type="text" id="search-input" oninput="filterHistory()" 
                     class="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition" 
@@ -197,26 +198,24 @@
                             <div class="loader h-4 w-4 mx-auto border-gray-400"></div>
                         </div>
                         
-                        <div id="m-comments-list" class="space-y-3 text-sm"></div>
-                        
                         <div id="m-comments-list" class="space-y-3 text-sm max-h-60 overflow-y-auto mb-3"></div>
                         
-                    <div id="m-no-comments" class="text-xs text-gray-400 italic hidden text-center py-2 bg-gray-50 rounded">
-                        Немає нових повідомлень
-                    </div>
-
-                    <div class="mt-4 pt-3 border-t border-gray-100">
-                        <label class="text-xs font-bold text-gray-400 uppercase mb-1 block">Ваша відповідь</label>
-                        <div class="flex gap-2">
-                            <input type="text" id="reply-input" 
-                                class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none transition" 
-                                placeholder="Напишіть повідомлення...">
-                            <button onclick="sendReply()" id="btn-reply" 
-                                class="bg-blue-600 text-white rounded-lg px-4 py-2 text-sm font-bold hover:bg-blue-700 transition flex items-center justify-center min-w-[50px]">
-                                <i class="fa-solid fa-paper-plane"></i>
-                            </button>
+                        <div id="m-no-comments" class="text-xs text-gray-400 italic hidden text-center py-2 bg-gray-50 rounded">
+                            Немає нових повідомлень
                         </div>
-                    </div>
+
+                        <div class="mt-4 pt-3 border-t border-gray-100">
+                            <label class="text-xs font-bold text-gray-400 uppercase mb-1 block">Ваша відповідь</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="reply-input" 
+                                    class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none transition" 
+                                    placeholder="Напишіть повідомлення...">
+                                <button onclick="sendReply()" id="btn-reply" 
+                                    class="bg-blue-600 text-white rounded-lg px-4 py-2 text-sm font-bold hover:bg-blue-700 transition flex items-center justify-center min-w-[50px]">
+                                    <i class="fa-solid fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     <div id="m-dynamic-details" class="hidden border-t pt-4">
@@ -348,21 +347,68 @@
         // --- 2. ЗМІННІ ---
         let allClaimsData = []; 
 
-       // --- 3. АВТОРИЗАЦІЯ (ВИПРАВЛЕНО ДЛЯ ЛІКАРЯ) ---
+        // --- 3. АВТОРИЗАЦІЯ ---
         function checkAuth() {
             const user = localStorage.getItem('emet_user');
             const email = localStorage.getItem('emet_email');
             
-            // Виправлення: перевіряємо тільки user, бо у лікаря email може бути пустим
+            // Якщо є хоча б Користувач (навіть без пошти - для Лікаря)
             if (user) {
                 showApp(user, email);
                 // Вантажимо історію ТІЛЬКИ якщо це менеджер (є email)
-                if (email) {
+                if (email && email.trim() !== '') {
                     loadHistoryFromServer(email); 
                 }
             } else {
                 showLogin();
             }
+        }
+
+        function showApp(user, email) {
+            document.getElementById('login-screen').classList.add('hidden');
+            // Якщо немає імені (старий глюк), пишемо заглушку
+            document.getElementById('current-user-display').innerText = user || 'Користувач';
+        }
+
+        function showLogin() {
+            document.getElementById('login-screen').classList.remove('hidden');
+        }
+
+        function loginManager(){ 
+            const email = document.getElementById('login-email').value; 
+            const pass = document.getElementById('login-password').value;
+            const btn = document.getElementById('btn-login');
+            const err = document.getElementById('login-error');
+
+            if(!email || !pass) {
+                err.innerText = "Введіть Email та Пароль";
+                err.classList.remove('hidden');
+                return;
+            }
+
+            btn.innerText = "Перевірка...";
+            err.classList.add('hidden');
+
+            fetch('/api/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ email: email, password: pass })
+            })
+            .then(r => r.json())
+            .then(data => {
+                btn.innerText = "Увійти";
+                if(data.status === 'success') {
+                    saveUserAndRedirect(data);
+                } else {
+                    err.innerText = data.message;
+                    err.classList.remove('hidden');
+                }
+            })
+            .catch(() => {
+                btn.innerText = "Увійти";
+                err.innerText = "Помилка сервера";
+                err.classList.remove('hidden');
+            });
         }
 
         function loginAsDoctor() {
@@ -386,7 +432,7 @@
             }
         }
 
-        // --- 4. ІСТОРІЯ І ПОШУК (ВИПРАВЛЕНО) ---
+        // --- 4. ІСТОРІЯ І ПОШУК ---
 
         async function loadHistoryFromServer(email) {
             const list = document.getElementById('active-list'); 
@@ -406,9 +452,7 @@
                 
                 const data = await response.json();
                 
-                // ЗБЕРІГАЄМО ДАНІ В ГЛОБАЛЬНУ ЗМІННУ
                 allClaimsData = data.history || [];
-                
                 renderHistory(allClaimsData); 
                 
             } catch (error) {
@@ -444,7 +488,7 @@
                 list.innerHTML = `
                     <div class="text-center mt-12 text-gray-400">
                         <i class="fa-solid fa-magnifying-glass text-4xl mb-3 opacity-20"></i>
-                        <p>Нічого не знайдено</p>
+                        <p>Історія порожня</p>
                     </div>`;
                 return;
             }
@@ -597,9 +641,8 @@
             });
         }
 
-        // --- 6. МОДАЛЬНЕ ВІКНО І ЧАТ (ВІДПРАВКА КОМЕНТАРЯ) ---
+        // --- 6. МОДАЛЬНЕ ВІКНО І ЧАТ ---
         
-        // --- 6. МОДАЛЬНЕ ВІКНО ---
         async function openModal(id) {
             // 1. Відкриваємо вікно і ставимо "Завантаження..."
             document.getElementById('details-modal').classList.remove('hidden');
@@ -636,7 +679,7 @@
                 
                 if (detailsData.status === 'ok') {
                     const d = detailsData.data;
-                    document.getElementById('m-type').innerText = 'Рекламація'; // Або тип, якщо він є окремим полем
+                    document.getElementById('m-type').innerText = 'Рекламація';
                     document.getElementById('m-client').innerText = d.client || 'Не вказано';
                     document.getElementById('m-product').innerText = d.product || 'Не вказано';
                     document.getElementById('m-lot').innerText = d.lot ? `(LOT: ${d.lot})` : '';
@@ -649,13 +692,10 @@
                     else if(d.status_text === 'Нова') badge.className = 'px-3 py-1 rounded-full text-xs font-bold uppercase bg-blue-100 text-blue-700';
                     else badge.className = 'px-3 py-1 rounded-full text-xs font-bold uppercase bg-yellow-100 text-yellow-700';
 
-                    // Анкета (парсимо текст)
+                    // Анкета
                     if (d.details) {
                         document.getElementById('m-dynamic-details').classList.remove('hidden');
-                        // Перетворюємо текстові переноси в HTML <br> і робимо жирним питання
                         let formattedHTML = d.details.replace(/\n/g, '<br>');
-                        // Спроба виділити питання (якщо вони закінчуються двокрапкою або знаком питання)
-                        // Це простий форматер, можна покращити
                         dynamicContent.innerHTML = formattedHTML;
                     }
                 }
@@ -685,7 +725,6 @@
                         const d = new Date(com.date);
                         const dateStr = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                         
-                        // Перевіряємо, чи це коментар менеджера (щоб пофарбувати інакше, наприклад)
                         const isMe = com.author.includes('Менеджер') || com.author.includes(localStorage.getItem('emet_user'));
                         const bgClass = isMe ? 'bg-blue-50 border-blue-100' : 'bg-gray-100 border-gray-200';
 
@@ -698,7 +737,6 @@
                             <div class="text-gray-800 leading-relaxed">${com.text}</div>
                         </div>`;
                     });
-                    // Прокрутка вниз до останнього коментаря
                     commList.scrollTop = commList.scrollHeight;
                 }
             } catch (e) {
