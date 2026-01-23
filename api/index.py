@@ -3,11 +3,14 @@ import json
 import requests
 import smtplib
 import re
+import os  # <--- ОСЬ ЦЕЙ РЯДОК ОБОВ'ЯЗКОВО ДОДАТИ!
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Body, Request
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
+
+app = FastAPI()
 
 app = FastAPI()
 
