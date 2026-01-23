@@ -232,7 +232,6 @@ async def submit_claim(
             "OPENED": "Y"
         }
         
-        # --- ВАЖЛИВО: ВИКОРИСТОВУЄМО ПРАВИЛЬНУ ЗМІННУ ТУТ! ---
         if manager_email: bx_fields[FIELD_MANAGER_EMAIL_IN_CLAIM] = manager_email
         
         if files:
@@ -247,18 +246,19 @@ async def submit_claim(
         if "error" in res: raise HTTPException(500, res['error_description'])
         
         new_id = res['result']['item']['id']
+        link_to_item = f"https://bitrix.emet.in.ua/crm/type/{CLAIMS_SPA_ID}/details/{new_id}/"
         
-        # 🔔 ДЗВІНОЧОК ДЛЯ МЕД. ВІДДІЛУ
+        # 🔔 ДЗВІНОЧОК З ПОСИЛАННЯМ [URL]
+        notify_msg = f"🚨 [URL={link_to_item}]Нова рекламація #{new_id}![/URL]\nКлієнт: {client}\nМенеджер: {manager}"
+        
         for uid in MED_DEPT_USER_IDS:
-            send_bitrix_notification(uid, f"🚨 Нова рекламація #{new_id}!\nКлієнт: {client}\nМенеджер: {manager}")
+            send_bitrix_notification(uid, notify_msg)
 
-        # ✈️ СПОВІЩЕННЯ В ТЕЛЕГРАМ (МЕНЕДЖЕРУ)
+        # Телеграм
         if manager_email:
             mgr = find_manager_by_email(manager_email)
-            if mgr:
-                tg_id = mgr.get(MGR_FIELD_TG_ID)
-                if tg_id:
-                    send_telegram(tg_id, f"✅ <b>Заявка #{new_id} прийнята!</b>\nКлієнт: {client}\n\nВи можете коментувати, відповідаючи на це повідомлення.")
+            if mgr and mgr.get(MGR_FIELD_TG_ID):
+                send_telegram(mgr[MGR_FIELD_TG_ID], f"✅ <b>Заявка #{new_id} прийнята!</b>\nКлієнт: {client}")
         
         if TG_ADMIN_CHAT_ID:
             send_telegram(TG_ADMIN_CHAT_ID, f"📝 Створено заявку #{new_id}")
@@ -388,12 +388,17 @@ async def get_comments(data: Dict[str, int] = Body(...)):
 @app.post("/api/webhook/status_update")
 async def status_update(id: str, stage_id: str):
     EMAIL_MED_DEPT = "itd@emet.in.ua"
-    LINK_TO_CRM = f"https://bitrix.emet.in.ua/crm/type/{CLAIMS_SPA_ID}/details"
 
     try:
-        clean_id = "".join(filter(str.isdigit, id)) if "_" in id else id
+        # ВИПРАВЛЕННЯ ID: Беремо частину після останнього підкреслення (якщо це dynamic_1038_14 -> 14)
+        clean_id = id.split('_')[-1] if '_' in id else id
+        # Для надійності лишаємо тільки цифри
+        clean_id = "".join(filter(str.isdigit, clean_id))
+        
         if not clean_id: return {"status": "error"}
-        real_id = int(clean_id) 
+        real_id = int(clean_id)
+        
+        LINK_TO_CRM = f"https://bitrix.emet.in.ua/crm/type/{CLAIMS_SPA_ID}/details/{real_id}/"
 
         stage_upper = stage_id.upper()
         is_new = any(x in stage_upper for x in ["NEW", "НОВА", "BEGIN"])
@@ -402,12 +407,10 @@ async def status_update(id: str, stage_id: str):
         if is_new or is_end:
             r = requests.post(f"{BITRIX_WEBHOOK_URL}crm.item.get", json={"entityTypeId": CLAIMS_SPA_ID, "id": real_id})
             item = r.json().get('result', {}).get('item', {})
-            
-            # --- ВИКОРИСТОВУЄМО ПРАВИЛЬНУ ЗМІННУ ДЛЯ ПОШУКУ ПОШТИ В ЗАЯВЦІ ---
             manager_mail = item.get(FIELD_MANAGER_EMAIL_IN_CLAIM)
             
             if is_new:
-                body = f"Нова рекламація #{real_id}. <a href='{LINK_TO_CRM}/{real_id}/'>Відкрити</a>"
+                body = f"Нова рекламація #{real_id}. <br><a href='{LINK_TO_CRM}'>Відкрити картку</a>"
                 send_email(EMAIL_MED_DEPT, f"Нова рекламація #{real_id}", body)
             
             elif is_end and manager_mail:
