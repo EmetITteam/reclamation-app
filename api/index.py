@@ -267,6 +267,36 @@ async def submit_claim(
     except Exception as e:
         raise HTTPException(500, str(e))
 
+# --- ЦЕЙ КЛАС ОБОВ'ЯЗКОВО МАЄ БУТИ В КОДІ (перед add_comment) ---
+class CommentModel(BaseModel):
+    id: int
+    message: str
+    author: str
+
+# --- ДОДАВАННЯ КОМЕНТАРЯ (Виправляємо помилку 404) ---
+@app.post("/api/add_comment")
+async def add_comment(data: CommentModel):
+    # Формуємо красивий HTML для Бітрікс
+    formatted_message = f"👨‍💻 <b>{data.author}</b> (Менеджер):<br>{data.message}"
+    
+    # 1. Відправляємо коментар у стрічку (Таймлайн)
+    requests.post(f"{BITRIX_WEBHOOK_URL}crm.timeline.comment.add", json={
+        "fields": {
+            "ENTITY_ID": data.id, 
+            "ENTITY_TYPE": f"dynamic_{CLAIMS_SPA_ID}", 
+            "COMMENT": formatted_message
+        }
+    })
+    
+    # 2. Формуємо посилання для "Дзвіночка"
+    link_to_item = f"https://bitrix.emet.in.ua/crm/type/{CLAIMS_SPA_ID}/details/{data.id}/"
+    
+    # 3. Відправляємо сповіщення мед. відділу
+    for uid in MED_DEPT_USER_IDS:
+        send_bitrix_notification(uid, f"💬 [URL={link_to_item}]Новий коментар у заявці #{data.id}[/URL] від менеджера.")
+        
+    return {"status": "ok"}
+
 # --- 📋 ІСТОРІЯ (Шукаємо по FIELD_MANAGER_EMAIL_IN_CLAIM) ---
 @app.post("/api/get_history")
 async def get_history(email: str = Form(...)):
@@ -318,12 +348,6 @@ async def get_claim_details(data: Dict[str, int] = Body(...)):
         "lot": item.get(FIELDS_MAP["lot"]), "client": item.get("title", "").replace("Рекламація: ", ""),
         "details": item.get(FIELDS_MAP["details"]), "status_text": st_text
     }}
-
-# --- 💬 КОМЕНТАРІ ---
-class CommentModel(BaseModel):
-    id: int
-    message: str
-    author: str
 
 # --- ДОДАЙТЕ ЦЕЙ РЯДОК ПЕРЕД ФУНКЦІЄЮ (для кешування імен) ---
 USER_NAME_CACHE = {}
