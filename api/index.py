@@ -484,6 +484,7 @@ async def status_update(id: str, stage_id: str):
 
 # --- 📨 ВЕБХУК ПОДІЙ (КОМЕНТАРІ З БІТРІКС -> ТЕЛЕГРАМ) ---
 # --- 📨 ВЕБХУК (ФИНАЛ: ДОБАВИЛИ ID В ТЕКСТ ДЛЯ ОТВЕТОВ) ---
+# --- 📨 ВЕБХУК (ФІНАЛ: З ПОСИЛАННЯМ НА CRM) ---
 @app.post("/api/webhook/bitrix_event")
 async def bitrix_event(request: Request):
     try:
@@ -495,7 +496,7 @@ async def bitrix_event(request: Request):
             comment_id = fields.get('data[FIELDS][ID]')
             if not comment_id: return {"status": "ignored"}
 
-            # 1. Получаем детали комментария
+            # 1. Отримуємо деталі коментаря
             r_com = requests.post(f"{BITRIX_WEBHOOK_URL}crm.timeline.comment.get", json={"id": comment_id})
             comment_res = r_com.json()
             comment_data = comment_res.get('result', {})
@@ -506,11 +507,11 @@ async def bitrix_event(request: Request):
             comment_text = comment_data.get('COMMENT', '')
             author_id = comment_data.get('AUTHOR_ID')
 
-            # Фильтр "Эхо"
+            # Фільтр "Ехо" (ігноруємо свої ж повідомлення)
             if "📱" in comment_text or "👨‍💻" in comment_text or "URL=" in comment_text:
                 return {"status": "ignored"}
 
-            # 2. Ищем заявку
+            # 2. Шукаємо заявку
             r_item = requests.post(f"{BITRIX_WEBHOOK_URL}crm.item.get", json={"entityTypeId": CLAIMS_SPA_ID, "id": entity_id})
             item = r_item.json().get('result', {}).get('item', {})
             
@@ -519,7 +520,7 @@ async def bitrix_event(request: Request):
             manager_mail = item.get(FIELD_MANAGER_EMAIL_IN_CLAIM)
             claim_title = item.get("title", f"Заявка #{entity_id}")
 
-            # 3. Отправляем в ТГ (С ВАЖНЫМ ИЗМЕНЕНИЕМ!)
+            # 3. Відправляємо в ТГ
             if manager_mail:
                 mgr = find_manager_by_email(manager_mail)
                 if mgr and mgr.get(MGR_FIELD_TG_ID):
@@ -531,8 +532,11 @@ async def bitrix_event(request: Request):
                         if users: author_name = f"{users[0]['NAME']} {users[0]['LAST_NAME']}"
                     except: pass
                     
-                    # 👇 ГЛАВНОЕ ИЗМЕНЕНИЕ: Добавили #{entity_id} в заголовок
-                    msg = f"💬 <b>Новий коментар у заявці #{entity_id}</b>\n{claim_title}\n\n👤 <b>{author_name}:</b>\n{comment_text}\n\n<i>Ви можете відповісти на це повідомлення</i>"
+                    # 👇 СТВОРЮЄМО ПОСИЛАННЯ
+                    link_to_crm = f"https://bitrix.emet.in.ua/crm/type/{CLAIMS_SPA_ID}/details/{entity_id}/"
+                    
+                    # 👇 ДОДАЄМО ПОСИЛАННЯ В ЗАГОЛОВОК
+                    msg = f"💬 <b>Новий коментар у заявці <a href='{link_to_crm}'>#{entity_id}</a></b>\n{claim_title}\n\n👤 <b>{author_name}:</b>\n{comment_text}\n\n<i>Ви можете відповісти на це повідомлення</i>"
                     
                     send_telegram(mgr[MGR_FIELD_TG_ID], msg)
                     print(f"   -> ✅ SENT TG to {mgr[MGR_FIELD_TG_ID]}")
