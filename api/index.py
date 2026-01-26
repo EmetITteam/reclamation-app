@@ -309,11 +309,12 @@ async def add_comment(data: CommentModel):
     return {"status": "ok"}
 
 # --- 📋 ІСТОРІЯ (Шукаємо по FIELD_MANAGER_EMAIL_IN_CLAIM) ---
+# --- 📋 ІСТОРІЯ (З ОНОВЛЕНИМ ДЕБАГОМ СТАТУСІВ) ---
 @app.post("/api/get_history")
 async def get_history(email: str = Form(...)):
     if not email: return {"history": []}
     
-    # --- ВАЖЛИВО: ВИКОРИСТОВУЄМО ПРАВИЛЬНУ ЗМІННУ В ФІЛЬТРІ ---
+    # Запит до Бітрікс
     r = requests.post(f"{BITRIX_WEBHOOK_URL}crm.item.list", json={
         "entityTypeId": CLAIMS_SPA_ID,
         "filter": { FIELD_MANAGER_EMAIL_IN_CLAIM: email }, 
@@ -328,10 +329,22 @@ async def get_history(email: str = Form(...)):
     if "items" in data['result']:
         for item in data['result']['items']:
             stage = item.get("stageId", "")
+            
+            # 👇 ОСЬ ЦЕЙ РЯДОК ПОКАЖЕ НАМ КОД СТАТУСУ В ЛОГАХ
+            print(f"🐛 CLAIM #{item['id']} STAGE ID: {stage}") 
+
             st_text = "В обробці"
-            if any(x in stage for x in ["WON", "SUCCESS", "ВИКОНАНО", "УСПІХ", "ВЫПОЛНЕНО", "DONE"]): st_text = "Вирішено"
-            elif any(x in stage for x in ["FAIL", "LOSE", "ВІДМОВА"]): st_text = "Відмовлено"
-            elif any(x in stage for x in ["NEW", "НОВА", "BEGIN"]): st_text = "Нова"
+            stage_upper = stage.upper() # Переводимо в верхній регістр
+
+            # Перевірка на УСПІХ (додавайте сюди коди, які побачите в логах)
+            if any(x in stage_upper for x in ["WON", "SUCCESS", "ВИКОНАНО","ВЫПОЛНЕНО", "УСПІХ", "DONE", "FINAL"]): 
+                st_text = "Вирішено"
+            # Перевірка на ВІДМОВУ
+            elif any(x in stage_upper for x in ["FAIL", "LOSE", "ВІДМОВА", "ОТКАЗ"]): 
+                st_text = "Відмовлено"
+            # Перевірка на НОВУ
+            elif any(x in stage_upper for x in ["NEW", "НОВА", "BEGIN"]): 
+                st_text = "Нова"
             
             history.append({
                 "id": item["id"], "title": item["title"], 
