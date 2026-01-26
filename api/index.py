@@ -22,7 +22,7 @@ CLAIMS_SPA_ID = 1038       # Рекламації
 MANAGERS_SPA_ID = 1042     # Менеджери
 
 # Кому дзвонити в "Дзвіночок" (ID співробітників мед. відділу)
-MED_DEPT_USER_IDS = [2049] 
+MED_DEPT_USER_IDS = [2049, 12546, 2081, 2080, 6601] 
 
 # --- КОДИ ПОЛІВ ---
 
@@ -423,7 +423,7 @@ async def get_comments(data: Dict[str, int] = Body(...)):
 # --- 🔄 СТАТУСИ (ИСПРАВЛЕНО: ДОБАВЛЕН РУССКИЙ ЯЗЫК) ---
 @app.post("/api/webhook/status_update")
 async def status_update(id: str, stage_id: str):
-    EMAIL_MED_DEPT = "itd@emet.in.ua"
+    EMAIL_MED_DEPT = "reclamation@emet.in.ua"
     
     try:
         # Очистка ID
