@@ -90,14 +90,14 @@
 
                     <div class="mb-5 bg-blue-50 p-3 rounded-lg border border-blue-100">
                         <label class="block text-xs font-bold text-blue-800 uppercase mb-2 required-mark">Препарат</label>
-                        <select id="product" onchange="renderDynamicForm()" class="w-full border rounded-lg p-3 bg-white" required>
-                            <option value="" disabled selected>Оберіть препарат...</option>
-                            <option value="VITARAN">HP CELL VITARAN (всі)</option>
-                            <option value="NEURONOX">NEURONOX</option>
-                            <option value="NEURAMIS">NEURAMIS</option>
-                            <option value="ELLANSE">ELLANSE</option>
-                            <option value="PETARAN">PETARAN</option>
-                            <option value="OTHER">Інше / Космецевтика</option>
+                        <select id="product" onchange="renderDynamicForm(); updatePhotoHint()" class="w-full border rounded-lg p-3 bg-white" required>
+                              <option value="" disabled selected>Оберіть препарат...</option>
+                              <option value="VITARAN">HP CELL VITARAN (всі)</option>
+                              <option value="NEURONOX">NEURONOX</option>
+                              <option value="NEURAMIS">NEURAMIS</option>
+                              <option value="ELLANSE">ELLANSE</option>
+                              <option value="PETARAN">PETARAN</option>
+                              <option value="OTHER">Інше / Космецевтика</option>
                         </select>
                         <div class="mt-3">
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1 required-mark">LOT / Серія</label>
@@ -1134,18 +1134,50 @@
         }
         // --- 📸 ЛОГІКА ПІДКАЗОК ДЛЯ ФОТО (ПОВНА) ---
 
-        const PHOTO_RULES = {
-            // Для ботулотоксинів (Нейронокс)
-            NEURONOX: `
-                <li>📌 <b>Фото та/або відеофіксація:</b> для оцінки м’язової активності <u>до проведення процедури</u> та <u>на момент звернення</u> пацієнта.</li>
-                <li>📌 <b>Схема-розмітка:</b> з вказуванням дозування на кожну точку.</li>
-            `,
-            // Для філерів та біостимуляторів (Неураміс, Еллансе, Петаран)
-            FILLERS: `
-                <li>📌 <b>Фото та/або відеофіксація:</b> <u>до</u> та <u>після</u> проведення процедури.</li>
-                <li>📌 <b>Схема-розмітка:</b> з вказуванням дозування та техніки виконання процедури.</li>
-            `
-        };
+        // --- 📸 ЛОГІКА ПІДКАЗОК ДЛЯ ФОТО (ВИПРАВЛЕНА ПІД id="product") ---
+
+    const PHOTO_RULES = {
+        NEURONOX: `
+            <li>📌 <b>Фото/відео:</b> м’язової активності <u>до процедури</u> та <u>на момент звернення</u>.</li>
+            <li>📌 <b>Схема-розмітка:</b> вказати дозування на кожну точку.</li>
+        `,
+        FILLERS: `
+            <li>📌 <b>Фото/відео:</b> <u>до</u> та <u>після</u> проведення процедури.</li>
+            <li>📌 <b>Схема-розмітка:</b> вказати дозування та техніку виконання.</li>
+        `
+    };
+
+    // Робимо функцію глобальною
+    window.updatePhotoHint = function() {
+        // 👇 ТУТ БУЛА ПОМИЛКА: Тепер використовуємо правильний ID "product"
+        const productSelect = document.getElementById('product'); 
+        const hintBox = document.getElementById('photo-instruction-box');
+        const hintText = document.getElementById('photo-instruction-text');
+        
+        if (!productSelect || !hintBox || !hintText) return;
+
+        // Беремо value (наприклад "NEURONOX" або "ELLANSE")
+        const val = productSelect.value; 
+
+        let ruleHTML = "";
+
+        // 1. NEURONOX
+        if (val === "NEURONOX") {
+            ruleHTML = PHOTO_RULES.NEURONOX;
+        } 
+        // 2. FILLERS (Неураміс, Еллансе, Петаран)
+        else if (["NEURAMIS", "ELLANSE", "PETARAN", "VITARAN"].includes(val)) {
+            ruleHTML = PHOTO_RULES.FILLERS;
+        }
+
+        // Відображення
+        if (ruleHTML) {
+            hintText.innerHTML = ruleHTML;
+            hintBox.classList.remove('hidden');
+        } else {
+            hintBox.classList.add('hidden');
+        }
+    }
 
         function updatePhotoHint() {
             const productSelect = document.getElementById('claim-product');
