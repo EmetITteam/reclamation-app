@@ -351,8 +351,9 @@ async def get_claim_details(data: Dict[str, int] = Body(...)):
     item = res['result']['item']
     stage = item.get("stageId", "")
     st_text = "В обробці"
-    if "WON" in stage: st_text = "Вирішено"
-    elif "FAIL" in stage: st_text = "Відмовлено"
+    stage_upper = stage.upper()
+    if any(x in stage_upper for x in ["WON", "SUCCESS", "ВИКОНАНО", "ВЫПОЛНЕНО"]): st_text = "Вирішено"
+    elif any(x in stage_upper for x in ["FAIL", "LOSE", "ВІДМОВА", "ОТКАЗ"]): st_text = "Відмовлено"
     elif "NEW" in stage: st_text = "Нова"
     return {"status": "ok", "data": {
         "id": item.get("id"), "title": item.get("title"), "product": item.get(FIELDS_MAP["product"]),
