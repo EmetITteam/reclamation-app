@@ -272,7 +272,7 @@ async def submit_claim(
                 send_telegram(mgr[MGR_FIELD_TG_ID], f"✅ <b>Заявка #{new_id} прийнята!</b>\nКлієнт: {client}")
         
         if TG_ADMIN_CHAT_ID:
-            send_telegram(TG_ADMIN_CHAT_ID, f"📝 Створено заявку #{new_id}")
+            send_telegram(TG_ADMIN_CHAT_ID, f"📝 Створено заявку(Адмін повідомлення) #{new_id}")
 
         return {"status": "success", "id": new_id}
     except Exception as e:
