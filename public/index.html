@@ -870,7 +870,7 @@
             
             if(medicalTypes.includes(t) && FORMS_CONFIG[p]) {
                 document.querySelector('#dynamic-form-area h3').innerHTML = '<i class="fa-solid fa-user-doctor mr-1"></i>Медична анкета';
-                FORMS_CONFIG[p].forEach(x => {
+                FORMS_CONFIG[p].forEach(field => {
                     let h = `<div><label class="block text-gray-700 text-sm font-bold mb-2">
     ${field.label} <span class="text-red-500">*</span>
 </label>`;
