@@ -877,7 +877,7 @@
                     if(field.type === 'textarea') 
                         h += `<textarea id="cust_${field.id}" rows="2" class="w-full border border-gray-300 rounded p-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none"></textarea>`;
                     else if(field.type === 'select') 
-                        h += `<select id="cust_${field.id}" class="w-full border border-gray-300 rounded p-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none">${x.options.map(o=>`<option>${o}</option>`).join('')}</select>`;
+                        h += `<select id="cust_${field.id}" class="w-full border border-gray-300 rounded p-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none">${field.options.map(o=>`<option>${o}</option>`).join('')}</select>`;
                     else 
                         h += `<input type="${field.type}" id="cust_${field.id}" class="w-full border border-gray-300 rounded p-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none">`;
                     f.insertAdjacentHTML('beforeend', h + '</div>');
