@@ -874,9 +874,9 @@
                     let h = `<div><label class="block text-gray-700 text-sm font-bold mb-2">
     ${field.label} <span class="text-red-500">*</span>
 </label>`;
-                    if(x.type === 'textarea') 
+                    if(field.type === 'textarea') 
                         h += `<textarea id="cust_${field.id}" rows="2" class="w-full border border-gray-300 rounded p-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none"></textarea>`;
-                    else if(x.type === 'select') 
+                    else if(field.type === 'select') 
                         h += `<select id="cust_${field.id}" class="w-full border border-gray-300 rounded p-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none">${x.options.map(o=>`<option>${o}</option>`).join('')}</select>`;
                     else 
                         h += `<input type="${field.type}" id="cust_${field.id}" class="w-full border border-gray-300 rounded p-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none">`;
