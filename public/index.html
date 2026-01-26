@@ -248,85 +248,359 @@
         // --- 1. КОНФІГУРАЦІЯ ---
         const FORMS_CONFIG = {
             'VITARAN': [
-                { id: 'date_complaint', label: 'Дата звернення пацієнта із скаргами', type: 'date' },
-                { id: 'date_proc', label: 'Дата проведення процедури', type: 'date' },
-                { id: 'tool', label: 'Чим проводили процедуру (голка, канюля), розмір', type: 'text' },
-                { id: 'anesthesia', label: 'Чи проводили знеболювання (яким препаратом)', type: 'text' },
-                { id: 'technique', label: 'Опишіть техніку виконання процедури', type: 'textarea' },
-                { id: 'complaints_during', label: 'Скарги під час процедури', type: 'textarea' },
-                { id: 'post_proc', label: 'Особливості постпроцедурного періоду', type: 'textarea' },
-                { id: 'complaints_now', label: 'Скарги пацієнта в даний момент', type: 'textarea' },
-                { id: 'status_localis', label: 'Status Localis (дані огляду)', type: 'textarea' },
-                { id: 'allergies', label: 'Алергії на полінуклеотиди?', type: 'select', options: ['Ні', 'Так'] },
-                { id: 'illness', label: 'Чим хворів (ла) за останні 2 місяці?', type: 'textarea' },
-                { id: 'cosmetics', label: 'Які косметичні засоби використовує?', type: 'text' },
-                { id: 'meds', label: 'Які ліки приймає зараз?', type: 'textarea' }
+                {
+                    id: 'date_complaint',
+                    label: 'Дата звернення пацієнта із скаргами',
+                    type: 'date'
+                },
+                {
+                    id: 'date_proc',
+                    label: 'Дата проведення процедури',
+                    type: 'date'
+                },
+                {
+                    id: 'tool',
+                    label: 'Чим проводили процедуру (голка, канюля), розмір',
+                    type: 'text'
+                },
+                {
+                    id: 'anesthesia',
+                    label: 'Чи проводили знеболювання (яким препаратом)',
+                    type: 'text'
+                },
+                {
+                    id: 'technique',
+                    label: 'Опишіть техніку виконання процедури',
+                    type: 'textarea'
+                },
+                {
+                    id: 'complaints_during',
+                    label: 'Скарги під час процедури',
+                    type: 'textarea'
+                },
+                {
+                    id: 'post_proc',
+                    label: 'Особливості постпроцедурного періоду',
+                    type: 'textarea'
+                },
+                {
+                    id: 'complaints_now',
+                    label: 'Скарги пацієнта в даний момент',
+                    type: 'textarea'
+                },
+                {
+                    id: 'status_localis',
+                    label: 'Status Localis (дані огляду)',
+                    type: 'textarea'
+                },
+                {
+                    id: 'allergies',
+                    label: 'Схильність пацієнта до алергічних реакцій, зокрема на ПН?',
+                    type: 'select',
+                    options: ['Ні', 'Так']
+                },
+                {
+                    id: 'illness',
+                    label: 'Чим хворів (ла) за останні 2 місяці?',
+                    type: 'textarea'
+                },
+                {
+                    id: 'cosmetics',
+                    label: 'Які косметичні засоби використовує?',
+                    type: 'text'
+                },
+                {
+                    id: 'meds',
+                    label: 'Які ліки приймає зараз?',
+                    type: 'textarea'
+                }
             ],
             'NEURONOX': [
-                { id: 'date_complaint', label: 'Дата звернення пацієнта', type: 'date' },
-                { id: 'date_proc', label: 'Дата проведення процедури', type: 'date' },
-                { id: 'date_dilution', label: 'Дата відновлення (розведення)', type: 'date' },
-                { id: 'diluent', label: 'Чим відновлювали та об\'єм', type: 'text' },
-                { id: 'anesthesia', label: 'Знеболення (препарат)', type: 'text' },
-                { id: 'patient_age', label: 'Вік пацієнта', type: 'text' },
-                { id: 'prev_botox_date', label: 'Дата попередньої ботулінотерапії', type: 'date' },
-                { id: 'prev_botox_drug', label: 'Препарат попередньої процедури', type: 'text' },
-                { id: 'prev_effect', label: 'Тривалість ефекту попер. процедури', type: 'text' },
-                { id: 'illness_chronic', label: 'Захворювання (гострі, хронічні)', type: 'textarea' },
-                { id: 'recent_infection', label: 'Як давно хворів простудними?', type: 'text' },
-                { id: 'meds', label: 'Які ліки приймає?', type: 'textarea' }
+                {
+                    id: 'date_complaint',
+                    label: 'Дата звернення пацієнта',
+                    type: 'date'
+                },
+                {
+                    id: 'date_proc',
+                    label: 'Дата проведення процедури',
+                    type: 'date'
+                },
+                {
+                    id: 'date_dilution',
+                    label: 'Дата відновлення (розведення)',
+                    type: 'date'
+                },
+                {
+                    id: 'diluent',
+                    label: 'Чим відновлювали та об'єм розчинника',
+                    type: 'text'
+                },
+                {
+                    id: 'anesthesia',
+                    label: 'Знеболення (препарат)',
+                    type: 'text'
+                },
+                {
+                    id: 'patient_age',
+                    label: 'Вік пацієнта',
+                    type: 'text'
+                },
+                {
+                    id: 'prev_botox_date',
+                    label: 'Дата попередньої ботулінотерапії',
+                    type: 'date'
+                },
+                {
+                    id: 'prev_botox_drug',
+                    label: 'Препарат попередньої процедури',
+                    type: 'text'
+                },
+                {
+                    id: 'prev_effect',
+                    label: 'Тривалість ефекту попер. процедури',
+                    type: 'text'
+                },
+                {
+                    id: 'illness_chronic',
+                    label: 'Захворювання (гострі, хронічні)',
+                    type: 'textarea'
+                },
+                {
+                    id: 'recent_infection',
+                    label: 'Як давно хворів інфекційними захворюваннями?',
+                    type: 'text'
+                },
+                {
+                    id: 'meds',
+                    label: 'Які ліки приймає?',
+                    type: 'textarea'
+                }
             ],
             'NEURAMIS': [
-                { id: 'date_complaint', label: 'Дата звернення пацієнта', type: 'date' },
-                { id: 'date_proc', label: 'Дата проведення процедури', type: 'date' },
-                { id: 'tool', label: 'Інструмент (голка/канюля, розмір)', type: 'text' },
-                { id: 'anesthesia', label: 'Знеболення (препарат)', type: 'text' },
-                { id: 'complaints_during', label: 'Скарги під час процедури', type: 'textarea' },
-                { id: 'post_proc', label: 'Особливості постпроцедурного періоду', type: 'textarea' },
-                { id: 'complaints_now', label: 'Скарги на даний момент', type: 'textarea' },
-                { id: 'status_localis', label: 'Status Localis (дані огляду)', type: 'textarea' },
-                { id: 'prev_contour', label: 'Контурна пластика тут раніше?', type: 'textarea' },
-                { id: 'prev_complaints', label: 'Скарги після попер. процедури?', type: 'textarea' },
-                { id: 'hyaluronidase', label: 'Чи застосовували гіалуронідазу?', type: 'select', options: ['Ні', 'Так'] },
-                { id: 'allergies', label: 'Схильність до алергій?', type: 'select', options: ['Ні', 'Так'] },
-                { id: 'illness', label: 'Чим хворів за останні 2 міс?', type: 'textarea' },
-                { id: 'meds', label: 'Які ліки приймає зараз?', type: 'textarea' }
+                {
+                    id: 'date_complaint',
+                    label: 'Дата звернення пацієнта',
+                    type: 'date'
+                },
+                {
+                    id: 'date_proc',
+                    label: 'Дата проведення процедури',
+                    type: 'date'
+                },
+                {
+                    id: 'tool',
+                    label: 'Інструмент (голка/канюля, розмір)',
+                    type: 'text'
+                },
+                {
+                    id: 'anesthesia',
+                    label: 'Знеболення (препарат)',
+                    type: 'text'
+                },
+                {
+                    id: 'complaints_during',
+                    label: 'Скарги під час процедури',
+                    type: 'textarea'
+                },
+                {
+                    id: 'post_proc',
+                    label: 'Особливості постпроцедурного періоду',
+                    type: 'textarea'
+                },
+                {
+                    id: 'complaints_now',
+                    label: 'Скарги на даний момент',
+                    type: 'textarea'
+                },
+                {
+                    id: 'status_localis',
+                    label: 'Status Localis (дані огляду)',
+                    type: 'textarea'
+                },
+                {
+                    id: 'prev_contour',
+                    label: 'Попередня пластика цієї зони: препарат?',
+                    type: 'textarea'
+                },
+                {
+                    id: 'prev_complaints',
+                    label: 'Скарги після попер. процедури?',
+                    type: 'textarea'
+                },
+                {
+                    id: 'hyaluronidase',
+                    label: 'Чи застосовували гіалуронідазу?',
+                    type: 'select',
+                    options: ['Ні', 'Так']
+                },
+                {
+                    id: 'allergies',
+                    label: 'Схильність до алергічних реакцій?',
+                    type: 'select',
+                    options: ['Ні', 'Так']
+                },
+                {
+                    id: 'illness',
+                    label: 'Чим хворів за останні 2 міс?',
+                    type: 'textarea'
+                },
+                {
+                    id: 'meds',
+                    label: 'Які ліки приймає зараз?',
+                    type: 'textarea'
+                }
             ],
             'ELLANSE': [
-                { id: 'date_complaint', label: 'Дата звернення пацієнта із скаргами', type: 'date' },
-                { id: 'date_proc', label: 'Дата проведення процедури', type: 'date' },
-                { id: 'tool', label: 'Чим проводили процедуру (розмір)', type: 'text' },
-                { id: 'complaints_during', label: 'Скарги під час процедури', type: 'textarea' },
-                { id: 'post_proc', label: 'Особливості постпроцедурного періоду', type: 'textarea' },
-                { id: 'complaints_now', label: 'Скарги пацієнта в даний момент', type: 'textarea' },
-                { id: 'status_localis', label: 'Status Localis (дані огляду)', type: 'textarea' },
-                { id: 'vaccination', label: 'Дата останньої вакцинації, яка саме вакцина?', type: 'text' },
-                { id: 'autoimmune', label: 'Захворювання сполучної тканини або автоімунні?', type: 'textarea' },
-                { id: 'diet', label: 'Чи дотримується пацієнт особливої дієти?', type: 'text' },
-                { id: 'illness', label: 'Чим хворів (ла) за останні 2 місяці?', type: 'textarea' },
-                { id: 'meds', label: 'Які ліки / БАДи приймає зараз?', type: 'textarea' },
-                { id: 'other_procs', label: 'Які процедури робили в цей період (препарати, час)?', type: 'textarea' }
+                {
+                    id: 'date_complaint',
+                    label: 'Дата звернення пацієнта із скаргами',
+                    type: 'date'
+                },
+                {
+                    id: 'date_proc',
+                    label: 'Дата проведення процедури',
+                    type: 'date'
+                },
+                {
+                    id: 'tool',
+                    label: 'Чим проводили процедуру (голка, канюля), розмір',
+                    type: 'text'
+                },
+                {
+                    id: 'complaints_during',
+                    label: 'Скарги під час процедури',
+                    type: 'textarea'
+                },
+                {
+                    id: 'post_proc',
+                    label: 'Особливості постпроцедурного періоду',
+                    type: 'textarea'
+                },
+                {
+                    id: 'complaints_now',
+                    label: 'Скарги пацієнта в даний момент',
+                    type: 'textarea'
+                },
+                {
+                    id: 'status_localis',
+                    label: 'Status Localis (дані огляду)',
+                    type: 'textarea'
+                },
+                {
+                    id: 'vaccination',
+                    label: 'Дата останньої вакцинації, яка саме вакцина?',
+                    type: 'text'
+                },
+                {
+                    id: 'autoimmune',
+                    label: 'Захворювання сполучної тканини або автоімунні?',
+                    type: 'textarea'
+                },
+                {
+                    id: 'diet',
+                    label: 'Чи дотримується пацієнт особливої дієти?',
+                    type: 'text'
+                },
+                {
+                    id: 'illness',
+                    label: 'Чим хворів (ла) за останні 2 місяці?',
+                    type: 'textarea'
+                },
+                {
+                    id: 'meds',
+                    label: 'Які ліки / БАДи приймає зараз?',
+                    type: 'textarea'
+                },
+                {
+                    id: 'other_procs',
+                    label: 'Які процедури робили в цей період (препарати, час)?',
+                    type: 'textarea'
+                }
             ],
             'PETARAN': [
-                { id: 'date_complaint', label: 'Дата звернення пацієнта із скаргами', type: 'date' },
-                { id: 'date_proc', label: 'Дата проведення процедури', type: 'date' },
-                { id: 'tool', label: 'Чим проводили процедуру (голка, канюля), розмір', type: 'text' },
-                { id: 'dilution_lido', label: 'Як проводили розведення, чи додавали лідокаїн?', type: 'text' },
-                { id: 'complaints_during', label: 'Скарги під час процедури', type: 'textarea' },
-                { id: 'post_proc', label: 'Особливості постпроцедурного періоду', type: 'textarea' },
-                { id: 'complaints_now', label: 'Скарги пацієнта в даний момент', type: 'textarea' },
-                { id: 'status_localis', label: 'Status Localis (дані огляду)', type: 'textarea' },
-                { id: 'allergies_poly', label: 'Алергія на полінуклеотиди?', type: 'select', options: ['Ні', 'Так'] },
-                { id: 'autoimmune', label: 'Захворювання сполучної тканини або автоімунні?', type: 'textarea' },
-                { id: 'massage', label: 'Чи дотримувався пацієнт вимог щодо масажу?', type: 'select', options: ['Так', 'Ні', 'Не знаю'] },
-                { id: 'illness', label: 'Чим хворів (ла) за останні 2 місяці?', type: 'textarea' },
-                { id: 'meds', label: 'Які ліки приймає зараз?', type: 'textarea' }
+                {
+                    id: 'date_complaint',
+                    label: 'Дата звернення пацієнта із скаргами',
+                    type: 'date'
+                },
+                {
+                    id: 'date_proc',
+                    label: 'Дата проведення процедури',
+                    type: 'date'
+                },
+                {
+                    id: 'tool',
+                    label: 'Чим проводили процедуру (голка, канюля), розмір',
+                    type: 'text'
+                },
+                {
+                    id: 'dilution_lido',
+                    label: 'Як проводили розведення, чи додавали лідокаїн?',
+                    type: 'text'
+                },
+                {
+                    id: 'complaints_during',
+                    label: 'Скарги під час процедури',
+                    type: 'textarea'
+                },
+                {
+                    id: 'post_proc',
+                    label: 'Особливості постпроцедурного періоду',
+                    type: 'textarea'
+                },
+                {
+                    id: 'complaints_now',
+                    label: 'Скарги пацієнта в даний момент',
+                    type: 'textarea'
+                },
+                {
+                    id: 'status_localis',
+                    label: 'Status Localis (дані огляду)',
+                    type: 'textarea'
+                },
+                {
+                    id: 'allergies_poly',
+                    label: 'Схильність до алергічних реакцій,зокрема на ПН?',
+                    type: 'select',
+                    options: ['Ні', 'Так']
+                },
+                {
+                    id: 'autoimmune',
+                    label: 'Захворювання сполучної тканини або автоімунні?',
+                    type: 'textarea'
+                },
+                {
+                    id: 'massage',
+                    label: 'Чи дотримувався пацієнт вимог щодо масажу?',
+                    type: 'select',
+                    options: ['Так', 'Ні', 'Не знаю']
+                },
+                {
+                    id: 'illness',
+                    label: 'Чим хворів (ла) за останні 2 місяці?',
+                    type: 'textarea'
+                },
+                {
+                    id: 'meds',
+                    label: 'Які ліки приймає зараз?',
+                    type: 'textarea'
+                }
             ],
             'OTHER': [
-                { id: 'problem_desc', label: 'Детальний опис проблеми', type: 'textarea' },
-                { id: 'date_proc', label: 'Дата процедури (якщо була)', type: 'date' }
+                {
+                    id: 'problem_desc',
+                    label: 'Детальний опис проблеми',
+                    type: 'textarea'
+                },
+                {
+                    id: 'date_proc',
+                    label: 'Дата процедури (якщо була)',
+                    type: 'date'
+                }
             ]
         };
+
 
         const STATUS_CONFIG = {
             'new': { text: 'Нова', class: 'bg-blue-100 text-blue-700 border-blue-200' },
