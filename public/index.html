@@ -875,11 +875,11 @@
     ${field.label} <span class="text-red-500">*</span>
 </label>`;
                     if(x.type === 'textarea') 
-                        h += `<textarea id="cust_${x.id}" rows="2" class="w-full border border-gray-300 rounded p-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none"></textarea>`;
+                        h += `<textarea id="cust_${field.id}" rows="2" class="w-full border border-gray-300 rounded p-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none"></textarea>`;
                     else if(x.type === 'select') 
-                        h += `<select id="cust_${x.id}" class="w-full border border-gray-300 rounded p-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none">${x.options.map(o=>`<option>${o}</option>`).join('')}</select>`;
+                        h += `<select id="cust_${field.id}" class="w-full border border-gray-300 rounded p-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none">${x.options.map(o=>`<option>${o}</option>`).join('')}</select>`;
                     else 
-                        h += `<input type="${x.type}" id="cust_${x.id}" class="w-full border border-gray-300 rounded p-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none">`;
+                        h += `<input type="${field.type}" id="cust_${field.id}" class="w-full border border-gray-300 rounded p-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none">`;
                     f.insertAdjacentHTML('beforeend', h + '</div>');
                 });
             } else {
