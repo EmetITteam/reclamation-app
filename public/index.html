@@ -871,7 +871,9 @@
             if(medicalTypes.includes(t) && FORMS_CONFIG[p]) {
                 document.querySelector('#dynamic-form-area h3').innerHTML = '<i class="fa-solid fa-user-doctor mr-1"></i>Медична анкета';
                 FORMS_CONFIG[p].forEach(x => {
-                    let h = `<div><label class="block text-xs font-medium text-gray-600 mb-1">${x.label}</label>`;
+                    let h = `<div><label class="block text-gray-700 text-sm font-bold mb-2">
+    ${field.label} <span class="text-red-500">*</span>
+</label>`;
                     if(x.type === 'textarea') 
                         h += `<textarea id="cust_${x.id}" rows="2" class="w-full border border-gray-300 rounded p-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none"></textarea>`;
                     else if(x.type === 'select') 
@@ -903,7 +905,45 @@
         }
 
         function submitForm(e) {
-            e.preventDefault();
+             e.preventDefault();
+            // 1. Знаходимо блок з динамічними полями
+        const dynamicBlock = document.getElementById('dynamic-fields');
+        
+        // 2. Якщо блок видимий (значить обрано препарат, який вимагає анкети)
+        if (dynamicBlock && !dynamicBlock.classList.contains('hidden')) {
+            
+            // Знаходимо всі поля вводу всередині цього блоку
+            const inputs = dynamicBlock.querySelectorAll('input, textarea, select');
+            let hasError = false;
+
+            // Перевіряємо кожне поле
+            for (let input of inputs) {
+                if (!input.value.trim()) {
+                    // Якщо пусто:
+                    input.classList.add('border-red-500'); // Підсвічуємо червоним
+                    input.classList.add('bg-red-50');      // Додаємо легкий фон
+                    
+                    // Фокусуємось на першому незаповненому полі
+                    if (!hasError) {
+                        input.focus();
+                        hasError = true;
+                    }
+                    
+                    // Додаємо подію: як тільки почне писати - прибрати червоний колір
+                    input.addEventListener('input', function() {
+                        this.classList.remove('border-red-500', 'bg-red-50');
+                    }, { once: true });
+                }
+            }
+
+            // Якщо знайшли хоч одну помилку - зупиняємо функцію!
+            if (hasError) {
+                alert("⚠️ Будь ласка, заповніть всі поля Медичної анкети!");
+                return; // ⛔️ СТОП: Далі код не піде
+            }
+        }
+        // --- КІНЕЦЬ ВАЛІДАЦІЇ ---
+           
             const btnT = document.getElementById('btn-text');
             const btnL = document.getElementById('btn-loader');
             btnT.innerText = 'Відправка...'; 
