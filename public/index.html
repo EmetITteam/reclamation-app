@@ -109,6 +109,11 @@
                         <h3 class="text-sm font-bold text-gray-700 mb-3">Деталі інциденту</h3>
                         <div id="dynamic-fields" class="space-y-3"></div>
                     </div>
+<div id="photo-instruction-box" class="hidden mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+    <ul id="photo-instruction-text" class="list-none space-y-2">
+        </ul>
+</div>
+                    
 
                     <div class="mb-6">
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Медіа докази</label>
@@ -1128,6 +1133,66 @@
                 if(email) loadHistoryFromServer(email);
             }
         }
+        // --- 📸 ЛОГІКА ПІДКАЗОК ДЛЯ ФОТО (ПОВНА) ---
+
+        const PHOTO_RULES = {
+            // Для ботулотоксинів (Нейронокс)
+            NEURONOX: `
+                <li>📌 <b>Фото та/або відеофіксація:</b> для оцінки м’язової активності <u>до проведення процедури</u> та <u>на момент звернення</u> пацієнта.</li>
+                <li>📌 <b>Схема-розмітка:</b> з вказуванням дозування на кожну точку.</li>
+            `,
+            // Для філерів та біостимуляторів (Неураміс, Еллансе, Петаран)
+            FILLERS: `
+                <li>📌 <b>Фото та/або відеофіксація:</b> <u>до</u> та <u>після</u> проведення процедури.</li>
+                <li>📌 <b>Схема-розмітка:</b> з вказуванням дозування та техніки виконання процедури.</li>
+            `
+        };
+
+        function updatePhotoHint() {
+            const productSelect = document.getElementById('claim-product');
+            const hintBox = document.getElementById('photo-instruction-box');
+            const hintText = document.getElementById('photo-instruction-text');
+            
+            if (!productSelect || !hintBox) return;
+
+            // Отримуємо назву обраного продукту (верхній регістр для зручності)
+            const selectedText = productSelect.options[productSelect.selectedIndex].text.toUpperCase();
+            
+            let ruleHTML = "";
+
+            // 1. ПЕРЕВІРКА: НЕЙРОНОКС (NEURONOX)
+            if (selectedText.includes("НЕЙРОНОКС") || selectedText.includes("NEURONOX")) {
+                ruleHTML = PHOTO_RULES.NEURONOX;
+            } 
+            // 2. ПЕРЕВІРКА: НЕУРАМІС (NEURAMIS)
+            else if (selectedText.includes("НЕУРАМІС") || selectedText.includes("NEURAMIS")) {
+                ruleHTML = PHOTO_RULES.FILLERS;
+            }
+            // 3. ПЕРЕВІРКА: ЕЛЛАНСЕ (ELLANSE)
+            else if (selectedText.includes("ЕЛЛАНСЕ") || selectedText.includes("ELLANSE")) {
+                ruleHTML = PHOTO_RULES.FILLERS;
+            }
+            // 4. ПЕРЕВІРКА: ПЕТАРАН (PETARAN)
+            else if (selectedText.includes("ПЕТАРАН") || selectedText.includes("PETARAN") || selectedText.includes("PITARAN")) {
+                ruleHTML = PHOTO_RULES.FILLERS;
+            }
+
+            // ВІДОБРАЖЕННЯ
+            if (ruleHTML) {
+                hintText.innerHTML = ruleHTML;
+                hintBox.classList.remove('hidden'); // Показуємо блок
+            } else {
+                hintBox.classList.add('hidden');    // Ховаємо, якщо інструкції немає
+            }
+        }
+
+        // Автозапуск логіки при зміні продукту
+        document.addEventListener('DOMContentLoaded', () => {
+            const productSelect = document.getElementById('claim-product');
+            if(productSelect) {
+                productSelect.addEventListener('change', updatePhotoHint);
+            }
+        });
 
        // Запуск: спочатку пробуємо автологін, якщо ні - перевіряємо авторизацію
         tryAutoLogin();
