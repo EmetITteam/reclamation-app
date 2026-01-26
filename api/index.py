@@ -329,7 +329,7 @@ async def get_history(email: str = Form(...)):
         for item in data['result']['items']:
             stage = item.get("stageId", "")
             st_text = "В обробці"
-            if any(x in stage for x in ["WON", "SUCCESS", "ВИКОНАНО", "УСПІХ"]): st_text = "Вирішено"
+            if any(x in stage for x in ["WON", "SUCCESS", "ВИКОНАНО", "УСПІХ", "ВЫПОЛНЕНО", "DONE"]): st_text = "Вирішено"
             elif any(x in stage for x in ["FAIL", "LOSE", "ВІДМОВА"]): st_text = "Відмовлено"
             elif any(x in stage for x in ["NEW", "НОВА", "BEGIN"]): st_text = "Нова"
             
