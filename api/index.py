@@ -17,6 +17,29 @@ app = FastAPI()
 # --- ⚙️ НАЛАШТУВАННЯ ---
 BITRIX_WEBHOOK_URL = "https://bitrix.emet.in.ua/rest/2049/24pv36uotghswqwa/"
 
+# --- 🚦 ГЛОБАЛЬНІ НАЛАШТУВАННЯ СТАТУСІВ ---
+# Тут ми пишемо всі можливі коди, які Бітрікс може надсилати.
+# Якщо з'явиться новий статус - додаємо його ТІЛЬКИ СЮДИ.
+
+STATUS_GROUPS = {
+    "SUCCESS": ["WON", "SUCCESS", "ВИКОНАНО", "УСПІХ", "DONE", "FINAL", "CLIENT", "ВЫПОЛНЕНО", "ГОТОВО"],
+    "FAIL":    ["FAIL", "LOSE", "ВІДМОВА", "ОТКАЗ", "REJECT"],
+    "NEW":     ["NEW", "НОВА", "BEGIN"]
+}
+
+def get_status_text(stage_id: str) -> str:
+    """Єдина функція, яка перетворює код Бітрікс на зрозумілий текст"""
+    stage_upper = stage_id.upper()
+    
+    if any(code in stage_upper for code in STATUS_GROUPS["SUCCESS"]):
+        return "Вирішено"
+    elif any(code in stage_upper for code in STATUS_GROUPS["FAIL"]):
+        return "Відмовлено"
+    elif any(code in stage_upper for code in STATUS_GROUPS["NEW"]):
+        return "Нова"
+    else:
+        return "В обробці" # Статус за замовчуванням
+
 # ID Смарт-процесів
 CLAIMS_SPA_ID = 1038       # Рекламації
 MANAGERS_SPA_ID = 1042     # Менеджери
@@ -308,13 +331,11 @@ async def add_comment(data: CommentModel):
         
     return {"status": "ok"}
 
-# --- 📋 ІСТОРІЯ (Шукаємо по FIELD_MANAGER_EMAIL_IN_CLAIM) ---
-# --- 📋 ІСТОРІЯ (З ОНОВЛЕНИМ ДЕБАГОМ СТАТУСІВ) ---
+# --- 📋 ІСТОРІЯ (РЕФАКТОРИНГ: ВИКОРИСТОВУЄ ГЛОБАЛЬНІ СТАТУСИ) ---
 @app.post("/api/get_history")
 async def get_history(email: str = Form(...)):
     if not email: return {"history": []}
     
-    # Запит до Бітрікс
     r = requests.post(f"{BITRIX_WEBHOOK_URL}crm.item.list", json={
         "entityTypeId": CLAIMS_SPA_ID,
         "filter": { FIELD_MANAGER_EMAIL_IN_CLAIM: email }, 
@@ -328,50 +349,42 @@ async def get_history(email: str = Form(...)):
     history = []
     if "items" in data['result']:
         for item in data['result']['items']:
-            stage = item.get("stageId", "")
-            
-            # 👇 ОСЬ ЦЕЙ РЯДОК ПОКАЖЕ НАМ КОД СТАТУСУ В ЛОГАХ
-            print(f"🐛 CLAIM #{item['id']} STAGE ID: {stage}") 
-
-            st_text = "В обробці"
-            stage_upper = stage.upper() # Переводимо в верхній регістр
-
-            # Перевірка на УСПІХ (додавайте сюди коди, які побачите в логах)
-            if any(x in stage_upper for x in ["WON", "SUCCESS", "ВИКОНАНО","ВЫПОЛНЕНО", "УСПІХ", "DONE", "FINAL", "CLIENT"]): 
-                st_text = "Вирішено"
-            # Перевірка на ВІДМОВУ
-            elif any(x in stage_upper for x in ["FAIL", "LOSE", "ВІДМОВА", "ОТКАЗ"]): 
-                st_text = "Відмовлено"
-            # Перевірка на НОВУ
-            elif any(x in stage_upper for x in ["NEW", "НОВА", "BEGIN"]): 
-                st_text = "Нова"
+            # Використовуємо єдину функцію для визначення статусу
+            st_text = get_status_text(item.get("stageId", ""))
             
             history.append({
-                "id": item["id"], "title": item["title"], 
-                "date": item["createdTime"][:10], "status": st_text
+                "id": item["id"], 
+                "title": item["title"], 
+                "date": item["createdTime"][:10], 
+                "status": st_text
             })
             
     return {"history": history}
 
 # --- 📄 ДЕТАЛІ ЗАЯВКИ ---
+# --- 📄 ДЕТАЛІ ЗАЯВКИ (РЕФАКТОРИНГ) ---
 @app.post("/api/get_claim_details")
 async def get_claim_details(data: Dict[str, int] = Body(...)):
     item_id = data.get('id')
     if not item_id: return {"status": "error"}
+    
     r = requests.post(f"{BITRIX_WEBHOOK_URL}crm.item.get", json={"entityTypeId": CLAIMS_SPA_ID, "id": item_id})
     res = r.json()
     if "result" not in res: return {"status": "error"}
+    
     item = res['result']['item']
-    stage = item.get("stageId", "")
-    st_text = "В обробці"
-    stage_upper = stage.upper()
-    if any(x in stage_upper for x in ["WON", "SUCCESS", "ВИКОНАНО", "ВЫПОЛНЕНО", "CLIENT"]): st_text = "Вирішено"
-    elif any(x in stage_upper for x in ["FAIL", "LOSE", "ВІДМОВА", "ОТКАЗ"]): st_text = "Відмовлено"
-    elif "NEW" in stage: st_text = "Нова"
+    
+    # Використовуємо єдину функцію для визначення статусу
+    st_text = get_status_text(item.get("stageId", ""))
+
     return {"status": "ok", "data": {
-        "id": item.get("id"), "title": item.get("title"), "product": item.get(FIELDS_MAP["product"]),
-        "lot": item.get(FIELDS_MAP["lot"]), "client": item.get("title", "").replace("Рекламація: ", ""),
-        "details": item.get(FIELDS_MAP["details"]), "status_text": st_text
+        "id": item.get("id"), 
+        "title": item.get("title"), 
+        "product": item.get(FIELDS_MAP["product"]),
+        "lot": item.get(FIELDS_MAP["lot"]), 
+        "client": item.get("title", "").replace("Рекламація: ", ""),
+        "details": item.get(FIELDS_MAP["details"]), 
+        "status_text": st_text
     }}
 
 # --- ДОДАЙТЕ ЦЕЙ РЯДОК ПЕРЕД ФУНКЦІЄЮ (для кешування імен) ---
@@ -433,14 +446,12 @@ async def get_comments(data: Dict[str, int] = Body(...)):
         
     return {"comments": comments}
 
-# --- 🔄 СТАТУСИ (WEBHOOK ВІД БІТРІКС) ---
-# --- 🔄 СТАТУСИ (ИСПРАВЛЕНО: ДОБАВЛЕН РУССКИЙ ЯЗЫК) ---
+# --- 🔄 СТАТУСИ (РЕФАКТОРИНГ: ВИКОРИСТОВУЄ ГЛОБАЛЬНІ СТАТУСИ) ---
 @app.post("/api/webhook/status_update")
 async def status_update(id: str, stage_id: str):
-    EMAIL_MED_DEPT = "reclamation@emet.in.ua"
+    EMAIL_MED_DEPT = "reclamation@emet.in.ua" # <--- ПЕРЕВІРТЕ ЦЮ ПОШТУ!
     
     try:
-        # Очистка ID
         clean_id = id.split('_')[-1] if '_' in id else id
         clean_id = "".join(filter(str.isdigit, clean_id))
         
@@ -450,18 +461,12 @@ async def status_update(id: str, stage_id: str):
         print(f"🔄 WEBHOOK UPDATE: Claim #{real_id}, Stage: {stage_id}")
         
         LINK_TO_CRM = f"https://bitrix.emet.in.ua/crm/type/{CLAIMS_SPA_ID}/details/{real_id}/"
-        stage_upper = stage_id.upper() # Превращаем в верхний регистр (ВЫПОЛНЕНО)
+        stage_upper = str(stage_id).upper()
 
-        # --- ЛОГИКА СТАТУСОВ ---
-        
-        # 1. Новая
-        is_new = any(x in stage_upper for x in ["NEW", "НОВА", "BEGIN"])
-        
-        # 2. Успех (Добавил: ВЫПОЛНЕНО, ГОТОВО, CLIENT, DONE)
-        is_success = any(x in stage_upper for x in ["SUCCESS", "WON", "CLIENT", "УСПІХ", "ВИКОНАНО", "ВЫПОЛНЕНО", "ГОТОВО", "DONE"])
-        
-        # 3. Отказ (Добавил: ОТКАЗ)
-        is_fail = any(x in stage_upper for x in ["FAIL", "LOSE", "ВІДМОВА", "ОТКАЗ"])
+        # --- НОВА ЛОГІКА ЧЕРЕЗ СЛОВНИК ---
+        is_new     = any(x in stage_upper for x in STATUS_GROUPS["NEW"])
+        is_success = any(x in stage_upper for x in STATUS_GROUPS["SUCCESS"])
+        is_fail    = any(x in stage_upper for x in STATUS_GROUPS["FAIL"])
         
         is_end = is_success or is_fail
 
@@ -470,8 +475,6 @@ async def status_update(id: str, stage_id: str):
             item = r.json().get('result', {}).get('item', {})
             manager_mail = item.get(FIELD_MANAGER_EMAIL_IN_CLAIM)
             
-            print(f"   -> Status Logic: New={is_new}, Success={is_success} (Found 'ВЫПОЛНЕНО'?), Fail={is_fail}")
-
             # 🅰️ НОВАЯ
             if is_new:
                 body = f"Нова рекламація #{real_id}. <br><a href='{LINK_TO_CRM}'>Відкрити картку</a>"
@@ -494,8 +497,6 @@ async def status_update(id: str, stage_id: str):
                     msg_text = f"Статус заявки #{real_id} змінено на: {status_text}"
                     send_email(manager_mail, f"Статус заявки #{real_id}", msg_text)
                     print(f"   -> Email sent to {manager_mail}")
-                else:
-                    print("   -> No Manager Email found")
 
         return {"status": "ok"}
     except Exception as e:
