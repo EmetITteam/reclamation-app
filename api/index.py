@@ -337,7 +337,7 @@ async def get_history(email: str = Form(...)):
             stage_upper = stage.upper() # Переводимо в верхній регістр
 
             # Перевірка на УСПІХ (додавайте сюди коди, які побачите в логах)
-            if any(x in stage_upper for x in ["WON", "SUCCESS", "ВИКОНАНО","ВЫПОЛНЕНО", "УСПІХ", "DONE", "FINAL"]): 
+            if any(x in stage_upper for x in ["WON", "SUCCESS", "ВИКОНАНО","ВЫПОЛНЕНО", "УСПІХ", "DONE", "FINAL", "CLIENT"]): 
                 st_text = "Вирішено"
             # Перевірка на ВІДМОВУ
             elif any(x in stage_upper for x in ["FAIL", "LOSE", "ВІДМОВА", "ОТКАЗ"]): 
@@ -365,7 +365,7 @@ async def get_claim_details(data: Dict[str, int] = Body(...)):
     stage = item.get("stageId", "")
     st_text = "В обробці"
     stage_upper = stage.upper()
-    if any(x in stage_upper for x in ["WON", "SUCCESS", "ВИКОНАНО", "ВЫПОЛНЕНО"]): st_text = "Вирішено"
+    if any(x in stage_upper for x in ["WON", "SUCCESS", "ВИКОНАНО", "ВЫПОЛНЕНО", "CLIENT"]): st_text = "Вирішено"
     elif any(x in stage_upper for x in ["FAIL", "LOSE", "ВІДМОВА", "ОТКАЗ"]): st_text = "Відмовлено"
     elif "NEW" in stage: st_text = "Нова"
     return {"status": "ok", "data": {
