@@ -195,7 +195,7 @@ async def telegram_webhook(request: Request):
 
 # --- 🔐 ЛОГІН ---
 @app.post("/api/login")
-async def login(data: Dict[str, str] = Body(...)):
+async def login(data: Dict[str, Any] = Body(...)):
     email = data.get("email", "").strip()
     password = data.get("password", "").strip()
     is_auto = data.get("is_auto", False)
