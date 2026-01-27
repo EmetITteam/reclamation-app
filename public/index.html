@@ -1009,19 +1009,29 @@
     const email = localStorage.getItem('emet_email') || '';
 
     let det = {};
-    const medTypes = ['side_effect','complication','effectiveness'];
-    
-    // Используем 'x' как в вашем конфиге, или 'field' если вы поменяли везде. 
-    // Я оставил x, как было в оригинале FORMS_CONFIG
-    if(medTypes.includes(type) && FORMS_CONFIG[prod]) {
-        FORMS_CONFIG[prod].forEach(x => { 
-            const el = document.getElementById('cust_' + x.id); 
-            if(el?.value) det[x.label] = el.value; 
-        });
-    } else { 
-        const el = document.getElementById('simple_desc'); 
-        if(el?.value) det[type === 'quality' ? 'Опис невідповідності' : 'Опис проблеми'] = el.value; 
-    }
+            const medTypes = ['side_effect','complication','effectiveness'];
+            
+            let configKey = prod;
+            if (prod.startsWith('VITARAN')) configKey = 'VITARAN';
+
+            // 👇 1. ЗАВЖДИ ПЕРЕВІРЯЄМО, ЧИ БУЛО ПОЛЕ "НАЗВА ПРОДУКТУ"
+            const otherNameInput = document.getElementById('other_product_name');
+            if (otherNameInput && otherNameInput.value) {
+                det['Уточнена назва продукту'] = otherNameInput.value;
+            }
+
+            // 👇 2. ЗБИРАЄМО РЕШТУ ПОЛІВ
+            if(medTypes.includes(type) && FORMS_CONFIG[configKey]) {
+                // Збираємо анкету
+                FORMS_CONFIG[configKey].forEach(x => { 
+                    const el = document.getElementById('cust_' + x.id); 
+                    if(el?.value) det[x.label] = el.value; 
+                });
+            } else { 
+                // Збираємо простий опис
+                const el = document.getElementById('simple_desc'); 
+                if(el?.value) det[type === 'quality' ? 'Опис невідповідності' : 'Опис проблеми'] = el.value; 
+            }
 
     const fd = new FormData();
     fd.append('type', type);
