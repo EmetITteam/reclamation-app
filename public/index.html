@@ -905,103 +905,121 @@
         }
 
         function submitForm(e) {
-             e.preventDefault();
-            // 1. Знаходимо блок з динамічними полями
-        const dynamicBlock = document.getElementById('dynamic-fields');
+    e.preventDefault();
+
+    // 1. 👇 ЗАЩИТА ОТ ДВОЙНОГО КЛИКА (Этого не было)
+    // Ищем кнопку и выключаем её сразу же
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    if(submitBtn) {
+        submitBtn.disabled = true; 
+        submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    }
+
+    // --- 🛡️ ВАЛІДАЦІЯ ---
+    const dynamicBlock = document.getElementById('dynamic-fields');
+    if (dynamicBlock && !dynamicBlock.classList.contains('hidden')) {
+        const inputs = dynamicBlock.querySelectorAll('input, textarea, select');
+        let hasError = false;
+
+        for (let input of inputs) {
+            if (!input.value.trim()) {
+                input.classList.add('border-red-500', 'bg-red-50');
+                if (!hasError) { input.focus(); hasError = true; }
+                input.addEventListener('input', function() {
+                    this.classList.remove('border-red-500', 'bg-red-50');
+                }, { once: true });
+            }
+        }
+
+        if (hasError) {
+            alert("⚠️ Будь ласка, заповніть всі поля Медичної анкети!");
+            
+            // 👇 ВАЖНО: Если валидация не прошла, кнопку нужно включить обратно!
+            if(submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+            return; // Стоп
+        }
+    }
+    // --- КІНЕЦЬ ВАЛІДАЦІЇ ---
+
+    const btnT = document.getElementById('btn-text');
+    const btnL = document.getElementById('btn-loader');
+    btnT.innerText = 'Відправка...'; 
+    btnL.classList.remove('hidden');
+
+    const prod = document.getElementById('product').value;
+    const type = document.getElementById('claimType').value;
+    const manager = localStorage.getItem('emet_user') || 'Unknown';
+    const email = localStorage.getItem('emet_email') || '';
+
+    let det = {};
+    const medTypes = ['side_effect','complication','effectiveness'];
+    
+    // Используем 'x' как в вашем конфиге, или 'field' если вы поменяли везде. 
+    // Я оставил x, как было в оригинале FORMS_CONFIG
+    if(medTypes.includes(type) && FORMS_CONFIG[prod]) {
+        FORMS_CONFIG[prod].forEach(x => { 
+            const el = document.getElementById('cust_' + x.id); 
+            if(el?.value) det[x.label] = el.value; 
+        });
+    } else { 
+        const el = document.getElementById('simple_desc'); 
+        if(el?.value) det[type === 'quality' ? 'Опис невідповідності' : 'Опис проблеми'] = el.value; 
+    }
+
+    const fd = new FormData();
+    fd.append('type', type);
+    fd.append('client', document.getElementById('client').value);
+    fd.append('product', prod);
+    fd.append('lot', document.getElementById('lot').value);
+    fd.append('invoice', document.getElementById('invoice').value);
+    fd.append('manager', manager);
+    fd.append('manager_email', email);
+    fd.append('details', JSON.stringify(det));
+    
+    const files = document.getElementById('dropzone-file').files;
+    for(let i=0; i<files.length; i++) fd.append('files', files[i]);
+
+    fetch('/api/submit_claim', { method: 'POST', body: fd })
+    .then(r => { 
+        if(!r.ok) throw new Error('Error'); 
+        return r.json(); 
+    })
+    .then(d => {
+        alert('✅ Рекламацію успішно створено! ID: ' + d.id);
+        document.getElementById('claimForm').reset();
+        document.getElementById('preview-area').innerHTML = '';
         
-        // 2. Якщо блок видимий (значить обрано препарат, який вимагає анкети)
-        if (dynamicBlock && !dynamicBlock.classList.contains('hidden')) {
-            
-            // Знаходимо всі поля вводу всередині цього блоку
-            const inputs = dynamicBlock.querySelectorAll('input, textarea, select');
-            let hasError = false;
-
-            // Перевіряємо кожне поле
-            for (let input of inputs) {
-                if (!input.value.trim()) {
-                    // Якщо пусто:
-                    input.classList.add('border-red-500'); // Підсвічуємо червоним
-                    input.classList.add('bg-red-50');      // Додаємо легкий фон
-                    
-                    // Фокусуємось на першому незаповненому полі
-                    if (!hasError) {
-                        input.focus();
-                        hasError = true;
-                    }
-                    
-                    // Додаємо подію: як тільки почне писати - прибрати червоний колір
-                    input.addEventListener('input', function() {
-                        this.classList.remove('border-red-500', 'bg-red-50');
-                    }, { once: true });
-                }
-            }
-
-            // Якщо знайшли хоч одну помилку - зупиняємо функцію!
-            if (hasError) {
-                alert("⚠️ Будь ласка, заповніть всі поля Медичної анкети!");
-                return; // ⛔️ СТОП: Далі код не піде
-            }
+        if(document.getElementById('dynamic-form-area')) {
+            document.getElementById('dynamic-form-area').classList.add('hidden');
         }
-        // --- КІНЕЦЬ ВАЛІДАЦІЇ ---
-           
-            const btnT = document.getElementById('btn-text');
-            const btnL = document.getElementById('btn-loader');
-            btnT.innerText = 'Відправка...'; 
-            btnL.classList.remove('hidden');
-
-            const prod = document.getElementById('product').value;
-            const type = document.getElementById('claimType').value;
-            const manager = localStorage.getItem('emet_user') || 'Unknown';
-            const email = localStorage.getItem('emet_email') || '';
-
-            let det = {};
-            const medTypes = ['side_effect','complication','effectiveness'];
-            if(medTypes.includes(type) && FORMS_CONFIG[prod]) {
-                FORMS_CONFIG[prod].forEach(x => { 
-                    const el = document.getElementById('cust_' + x.id); 
-                    if(el?.value) det[x.label] = el.value; 
-                });
-            } else { 
-                const el = document.getElementById('simple_desc'); 
-                if(el?.value) det[type === 'quality' ? 'Опис невідповідності' : 'Опис проблеми'] = el.value; 
-            }
-
-            const fd = new FormData();
-            fd.append('type', type);
-            fd.append('client', document.getElementById('client').value);
-            fd.append('product', prod);
-            fd.append('lot', document.getElementById('lot').value);
-            fd.append('invoice', document.getElementById('invoice').value);
-            fd.append('manager', manager);
-            fd.append('manager_email', email);
-            fd.append('details', JSON.stringify(det));
-            
-            const files = document.getElementById('dropzone-file').files;
-            for(let i=0; i<files.length; i++) fd.append('files', files[i]);
-
-            fetch('/api/submit_claim', { method: 'POST', body: fd })
-            .then(r => { 
-                if(!r.ok) throw new Error('Error'); 
-                return r.json(); 
-            })
-            .then(d => {
-                alert('✅ Рекламацію успішно створено! ID: ' + d.id);
-                document.getElementById('claimForm').reset();
-                document.getElementById('preview-area').innerHTML = '';
-                document.getElementById('dynamic-form-area').classList.add('hidden');
-                
-                switchTab('history');
-                
-                btnT.innerText = 'Відправити рекламацію'; 
-                btnL.classList.add('hidden');
-            })
-            .catch(e => { 
-                console.error(e); 
-                btnT.innerText = 'Відправити'; 
-                btnL.classList.add('hidden'); 
-                alert('❌ Помилка відправки. Перевірте з\'єднання.'); 
-            });
+        
+        switchTab('history');
+        
+        btnT.innerText = 'Відправити рекламацію'; 
+        btnL.classList.add('hidden');
+        
+        // 👇 ВКЛЮЧАЕМ КНОПКУ ОБРАТНО (для следующего раза)
+        if(submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
         }
+    })
+    .catch(e => { 
+        console.error(e); 
+        btnT.innerText = 'Відправити'; 
+        btnL.classList.add('hidden'); 
+        alert('❌ Помилка відправки. Перевірте з\'єднання.'); 
+        
+        // 👇 ПРИ ОШИБКЕ ТОЖЕ ВКЛЮЧАЕМ КНОПКУ
+        if(submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+    });
+}
 
         // --- 6. МОДАЛЬНЕ ВІКНО І ЧАТ ---
         
