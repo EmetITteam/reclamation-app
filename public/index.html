@@ -90,15 +90,23 @@
 
                     <div class="mb-5 bg-blue-50 p-3 rounded-lg border border-blue-100">
                         <label class="block text-xs font-bold text-blue-800 uppercase mb-2 required-mark">Препарат</label>
-                        <select id="product" onchange="renderDynamicForm(); updatePhotoHint()" class="w-full border rounded-lg p-3 bg-white" required>
-                              <option value="" disabled selected>Оберіть препарат...</option>
-                              <option value="VITARAN">HP CELL VITARAN (всі)</option>
-                              <option value="NEURONOX">NEURONOX</option>
-                              <option value="NEURAMIS">NEURAMIS</option>
-                              <option value="ELLANSE">ELLANSE</option>
-                              <option value="PETARAN">PETARAN</option>
-                              <option value="OTHER">Інше / Космецевтика</option>
-                        </select>
+                        <select id="product" onchange="renderDynamicForm(); updatePhotoHint()" class="w-full border border-gray-300 rounded-lg p-3 bg-white focus:ring-2 focus:ring-blue-500 outline-none transition" required>
+    <option value="" disabled selected>Оберіть препарат...</option>
+    
+    <option value="VITARAN_I">HP CELL VITARAN I</option>
+    <option value="VITARAN_II">HP CELL VITARAN II</option>
+    <option value="VITARAN_TOX">HP CELL VITARAN TOX</option>
+    <option value="VITARAN_W">HP CELL VITARAN Whitening</option>
+    
+    <option value="IUSE">IUSE SKIN BOOSTER HA20</option>
+    
+    <option value="NEURONOX">NEURONOX</option>
+    <option value="NEURAMIS">NEURAMIS</option>
+    <option value="ELLANSE">ELLANSE</option>
+    <option value="PETARAN">PETARAN</option>
+    
+    <option value="OTHER">Інше / Космецевтика</option>
+</select>
                         <div class="mt-3">
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1 required-mark">LOT / Серія</label>
                             <input type="text" id="lot" class="w-full border rounded-lg p-3" placeholder="Вкажіть LOT із упаковки" required>
@@ -251,6 +259,22 @@
     <script>
         // --- 1. КОНФІГУРАЦІЯ ---
         const FORMS_CONFIG = {
+            IUSE: [
+            {id: 'date_appeal', label: '3. Дата звернення пацієнта із скаргами', type: 'date'},
+            {id: 'date_proc', label: '4. Дата проведення процедури', type: 'date'},
+            {id: 'tool', label: '5. Чим проводили процедуру (голка, канюля), розмір', type: 'text'},
+            {id: 'anest', label: '6. Чи проводили знеболювання (так/ні, препарат)', type: 'text'},
+            // Пункт 7 йде в блок медіа-доказів як підказка
+            {id: 'tech', label: '8. Опишіть техніку виконання процедури', type: 'textarea'},
+            {id: 'compl_during', label: '9. Чи були скарги під час процедури? (так/ні, на що)', type: 'text'},
+            {id: 'post_proc', label: '10. Особливості постпроцедурного періоду', type: 'textarea'},
+            {id: 'compl_now', label: '11. Скарги пацієнта в даний момент', type: 'textarea'},
+            {id: 'st_localis', label: '12. Status Localis (дані огляду)', type: 'textarea'},
+            {id: 'allergy', label: '13. Чи схильний пацієнт до алергічних реакцій?', type: 'text'},
+            {id: 'sick', label: '14. Чим хворів (ла) за останні 2 місяці?', type: 'text'},
+            {id: 'cosm', label: '15. Які косметичні засоби використовує пацієнт?', type: 'text'},
+            {id: 'meds', label: '16. Які ліки приймає зараз?', type: 'text'}
+        ],
             'VITARAN': [
                 {
                     id: 'date_complaint',
@@ -856,41 +880,61 @@
 
         // --- 5. ФОРМА ---
         function renderDynamicForm() {
-            const p = document.getElementById('product').value;
-            const t = document.getElementById('claimType').value;
-            const c = document.getElementById('dynamic-form-area');
-            const f = document.getElementById('dynamic-fields');
-            
-            f.innerHTML = '';
-            
-            if(!t || !p){ c.classList.add('hidden'); return; }
-            c.classList.remove('hidden');
-            
-            const medicalTypes = ['side_effect','complication','effectiveness'];
-            
-            if(medicalTypes.includes(t) && FORMS_CONFIG[p]) {
-                document.querySelector('#dynamic-form-area h3').innerHTML = '<i class="fa-solid fa-user-doctor mr-1"></i>Медична анкета';
-                FORMS_CONFIG[p].forEach(field => {
-                    let h = `<div><label class="block text-gray-700 text-sm font-bold mb-2">
-    ${field.label} <span class="text-red-500">*</span>
-</label>`;
-                    if(field.type === 'textarea') 
-                        h += `<textarea id="cust_${field.id}" rows="2" class="w-full border border-gray-300 rounded p-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none"></textarea>`;
-                    else if(field.type === 'select') 
-                        h += `<select id="cust_${field.id}" class="w-full border border-gray-300 rounded p-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none">${field.options.map(o=>`<option>${o}</option>`).join('')}</select>`;
-                    else 
-                        h += `<input type="${field.type}" id="cust_${field.id}" class="w-full border border-gray-300 rounded p-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none">`;
-                    f.insertAdjacentHTML('beforeend', h + '</div>');
-                });
-            } else {
-                document.querySelector('#dynamic-form-area h3').innerHTML = '<i class="fa-solid fa-box-open mr-1"></i>Деталі інциденту';
-                const lbl = t === 'quality' ? 'Опишіть суть невідповідності якості' : 'Опишіть суть проблеми / браку';
-                f.innerHTML = `<div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">${lbl}</label>
-                    <textarea id="simple_desc" rows="4" class="w-full border border-gray-300 rounded p-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none"></textarea>
-                </div>`;
-            }
+        const p = document.getElementById('product').value;
+        const t = document.getElementById('claimType').value;
+        const c = document.getElementById('dynamic-form-area');
+        const f = document.getElementById('dynamic-fields');
+        
+        f.innerHTML = '';
+        
+        if(!t || !p){ c.classList.add('hidden'); return; }
+        c.classList.remove('hidden');
+        
+        const medicalTypes = ['side_effect','complication','effectiveness'];
+        
+        // Визначаємо ключ конфігурації.
+        // Якщо обрано будь-який VITARAN (I, II, TOX...), шукаємо конфіг для 'VITARAN' (якщо він є)
+        // Або використовуємо точний ключ (для IUSE, NEURONOX...)
+        let configKey = p;
+        if (p.startsWith('VITARAN') && FORMS_CONFIG['VITARAN']) {
+            configKey = 'VITARAN'; 
         }
+
+        if(medicalTypes.includes(t) && FORMS_CONFIG[configKey]) {
+            document.querySelector('#dynamic-form-area h3').innerHTML = '<i class="fa-solid fa-user-doctor mr-1"></i>Медична анкета';
+            
+            FORMS_CONFIG[configKey].forEach(field => {
+                let h = `<div><label class="block text-gray-700 text-sm font-bold mb-2">
+                            ${field.label} <span class="text-red-500">*</span>
+                         </label>`;
+                
+                if(field.type === 'textarea') 
+                    h += `<textarea id="cust_${field.id}" rows="2" class="w-full border border-gray-300 rounded p-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none"></textarea>`;
+                else if(field.type === 'date') 
+                    h += `<input type="date" id="cust_${field.id}" class="w-full border border-gray-300 rounded p-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none">`;
+                else if(field.type === 'select') 
+                    h += `<select id="cust_${field.id}" class="w-full border border-gray-300 rounded p-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none">${field.options.map(o=>`<option>${o}</option>`).join('')}</select>`;
+                else 
+                    h += `<input type="${field.type}" id="cust_${field.id}" class="w-full border border-gray-300 rounded p-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none">`;
+                
+                f.insertAdjacentHTML('beforeend', h + '</div>');
+            });
+
+        } else {
+            // Блок "Інше" або якщо немає анкети
+            document.querySelector('#dynamic-form-area h3').innerHTML = '<i class="fa-solid fa-box-open mr-1"></i>Деталі інциденту';
+            
+            // 👇 ТУТ ЗМІНЕНО ТЕКСТ, ЯК ВИ ПРОСИЛИ
+            const lbl = t === 'quality' 
+                ? 'Зазначте назву продукту та опишіть суть невідповідності' 
+                : 'Зазначте назву продукту та опишіть суть проблеми / браку';
+            
+            f.innerHTML = `<div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">${lbl} <span class="text-red-500">*</span></label>
+                <textarea id="simple_desc" rows="4" class="w-full border border-gray-300 rounded p-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none"></textarea>
+            </div>`;
+        }
+    }
 
         function previewFiles(){
             const p = document.getElementById('preview-area'); 
@@ -1207,26 +1251,36 @@
 
     // Робимо функцію глобальною
     window.updatePhotoHint = function() {
-        // 👇 ТУТ БУЛА ПОМИЛКА: Тепер використовуємо правильний ID "product"
         const productSelect = document.getElementById('product'); 
         const hintBox = document.getElementById('photo-instruction-box');
         const hintText = document.getElementById('photo-instruction-text');
         
         if (!productSelect || !hintBox || !hintText) return;
 
-        // Беремо value (наприклад "NEURONOX" або "ELLANSE")
         const val = productSelect.value; 
 
         let ruleHTML = "";
 
-        // 1. NEURONOX
+        // 1. NEURONOX (Ботокс)
         if (val === "NEURONOX") {
             ruleHTML = PHOTO_RULES.NEURONOX;
         } 
-        // 2. FILLERS (Неураміс, Еллансе, Петаран)
-        else if (["NEURAMIS", "ELLANSE", "PETARAN", "VITARAN"].includes(val)) {
+        // 2. FILLERS + IUSE + Всі VITARAN
+        // Перевіряємо: чи це один зі списку АБО назва починається на "VITARAN"
+        else if (
+            ["NEURAMIS", "ELLANSE", "PETARAN", "IUSE"].includes(val) || 
+            val.startsWith("VITARAN")
+        ) {
             ruleHTML = PHOTO_RULES.FILLERS;
         }
+
+        if (ruleHTML) {
+            hintText.innerHTML = ruleHTML;
+            hintBox.classList.remove('hidden');
+        } else {
+            hintBox.classList.add('hidden');
+        }
+    }
 
         // Відображення
         if (ruleHTML) {
