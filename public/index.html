@@ -1274,21 +1274,14 @@
             ruleHTML = PHOTO_RULES.FILLERS;
         }
 
+        // Відображення (Цей блок має бути ВСЕРЕДИНІ функції)
         if (ruleHTML) {
             hintText.innerHTML = ruleHTML;
             hintBox.classList.remove('hidden');
         } else {
             hintBox.classList.add('hidden');
         }
-    }
-
-        // Відображення
-        if (ruleHTML) {
-            hintText.innerHTML = ruleHTML;
-            hintBox.classList.remove('hidden');
-        } else {
-            hintBox.classList.add('hidden');
-        }
+    };
 
         function updatePhotoHint() {
             const productSelect = document.getElementById('claim-product');
